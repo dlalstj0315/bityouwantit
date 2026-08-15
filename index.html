@@ -1,373 +1,2601 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>어두운 학교 탈출 - 진행 버그 수정 버전</title>
-    <style>
-        body {
-            margin: 0; padding: 0; background-color: #010102;
-            color: #eee; font-family: 'Malgun Gothic', sans-serif; overflow: hidden; user-select: none;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>민서 몬스터 슈터</title>
 
-        /* 복도 너비 1100px */
-        #game-container {
-            position: relative; width: 1100px; height: 550px; margin: 20px auto;
-            background: #000000;
-            border: 4px solid #1a1a1a; border-radius: 6px; overflow: hidden;
-            box-shadow: 0 0 50px rgba(0,0,0,1);
-        }
+<style>
+*{
+ box-sizing:border-box;
+ -webkit-tap-highlight-color:transparent;
+}
 
-        /* 손전등(라이트) 레이어 */
-        #flashlight-overlay {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 25;
-            background: rgba(0, 0, 0, 0.99);
-        }
+html,body{
+ margin:0;
+ width:100%;
+ height:100%;
+ overflow:hidden;
+ background:#050817;
+ color:white;
+ font-family:Arial,sans-serif;
+ touch-action:none;
+}
 
-        /* 탈출 문 위치 (오른쪽 끝 1000px 지점) */
-        .door {
-            position: absolute; left: 980px; top: 300px; width: 75px; height: 150px;
-            background: linear-gradient(90deg, #2c1a10, #3d2516, #1f120a);
-            border: 3px solid #0f0905; border-radius: 2px;
-            box-shadow: inset -5px 0 10px #000;
-        }
-        .door-label {
-            position: absolute; top: -45px; left: -25px; width: 120px; text-align: center;
-            font-size: 12px; color: #ff3333; background: rgba(0, 0, 0, 0.9);
-            padding: 6px; border-radius: 4px; border: 1px solid #7f1d1d;
-            font-weight: bold; box-shadow: 0 4px 10px #000; display: none; z-index: 26;
-        }
+canvas{
+ display:block;
+ width:100%;
+ height:100%;
+}
 
-        /* 주인공 (학생) */
-        #player {
-            position: absolute; left: 150px; top: 380px; width: 45px; height: 70px;
-            background: linear-gradient(135deg, #2471a3, #154360);
-            border: 2px solid #3498db; border-radius: 4px;
-            box-shadow: 0 0 15px rgba(0,0,0,0.8);
-            display: flex; flex-direction: column; align-items: center; justify-content: space-between;
-            padding: 5px 0; box-sizing: border-box; z-index: 10;
-        }
-        .player-eye { width: 28px; height: 8px; background: #fff; border-radius: 2px; display: flex; justify-content: space-around; align-items: center; }
-        .player-eye::before, .player-eye::after { content: ''; width: 6px; height: 6px; background: #000; border-radius: 50%; }
-        .player-tag { font-size: 11px; font-weight: bold; color: #ccc; }
+button{
+ border:0;
+ border-radius:12px;
+ background:#596cff;
+ color:white;
+ padding:12px 17px;
+ font-weight:bold;
+ font-size:15px;
+ touch-action:manipulation;
+}
 
-        /* 웅크리기 스타일 */
-        #player.crouch {
-            height: 38px !important;
-            top: 412px !important;
-            background: linear-gradient(135deg, #1a5276, #0e334c);
-        }
+button:active{
+ transform:scale(.93);
+}
 
-        /* 기어 오는 괴물 */
-        #chaser {
-            position: absolute; left: -160px; top: 290px; width: 95px; height: 160px;
-            background: black; border: 4px solid #850000; border-radius: 12px; display: none;
-            flex-direction: column; align-items: center; justify-content: center;
-            z-index: 9; box-shadow: 0 0 40px #ff0000, inset 0 0 30px #200000;
-            animation: gore-shake 0.15s infinite;
-        }
-        .monster-eye { width: 70px; height: 25px; display: flex; justify-content: space-between; }
-        .monster-eye::before, .monster-eye::after { 
-            content: ''; width: 22px; height: 22px; background: #ff0000; border-radius: 50%; 
-            box-shadow: 0 0 25px #ff0000, 0 0 5px #fff;
-        }
-        .monster-mouth { width: 60px; height: 35px; border-bottom: 6px dashed #ff0000; border-radius: 50%; }
-        
-        @keyframes gore-shake {
-            0% { transform: translate(1px, 1px); }
-            50% { transform: translate(-1px, -1px); }
-            100% { transform: translate(1px, -1px); }
-        }
+.hidden{
+ display:none!important;
+}
 
-        /* [학교 의자] 바닥 장애물 */
-        .obstacle-chair {
-            position: absolute; width: 40px; height: 50px;
-            background: linear-gradient(180deg, #5c3a21 0%, #a0522d 40%, #2d1a10 100%);
-            border: 2px solid #3e2716; border-radius: 3px;
-            box-shadow: 0 4px 8px #000;
-        }
-        .obstacle-chair::before {
-            content: ''; position: absolute; top: 0; left: 6px; width: 24px; height: 18px;
-            border-bottom: 3px solid #2d1a10;
-        }
+/* HUD */
 
-        /* [학교 책상] 상공 장애물 */
-        .obstacle-desk {
-            position: absolute; width: 75px; height: 65px;
-            background: linear-gradient(180deg, #1c2833 0%, #34495e 20%, #7f8c8d 25%, #2c3e50 100%);
-            border-bottom: 5px solid #7f1d1d;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.9);
-        }
-        .obstacle-desk::after {
-            content: '⚠️'; position: absolute; bottom: 4px; left: 0; width: 100%;
-            text-align: center; font-size: 12px;
-        }
+#hud{
+ position:fixed;
+ z-index:20;
+ top:8px;
+ left:8px;
+ right:8px;
+ display:flex;
+ justify-content:space-between;
+ pointer-events:none;
+}
 
-        /* UI */
-        #mission-box {
-            position: absolute; top: 20px; right: 20px; width: 240px;
-            background: rgba(0, 0, 0, 0.9); border-left: 5px solid #922b21;
-            padding: 12px; display: none; z-index: 30; font-size: 13px; color: #ccc;
-        }
-        #dialogue-box {
-            position: absolute; bottom: 25px; left: 50%; transform: translateX(-50%);
-            width: 85%; background: #050505; border: 2px solid #7f1d1d;
-            padding: 18px; box-sizing: border-box; text-align: center;
-            font-size: 16px; font-weight: bold; line-height: 1.6; z-index: 30;
-            cursor: pointer; border-radius: 4px; box-shadow: 0 10px 30px #000;
-        }
-        .controls-guide { font-size: 12px; color: #666; font-weight: normal; margin-top: 5px; }
+.hud{
+ background:#0b1435ee;
+ border:2px solid #596cff;
+ border-radius:13px;
+ padding:7px 10px;
+ font-size:13px;
+}
 
-        .screen {
-            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; z-index: 100; display: none;
-        }
-        .screen h1 { font-size: 36px; margin-bottom: 25px; letter-spacing: 2px; }
-        .screen button {
-            padding: 12px 28px; background: #7f1d1d; border: 1px solid #ff0000; color: white;
-            font-size: 15px; cursor: pointer; border-radius: 2px; font-weight: bold; box-shadow: 0 0 10px #7f1d1d;
-        }
-        .screen button:hover { background: #b01e1e; }
-    </style>
+.bar{
+ width:150px;
+ height:8px;
+ background:#24283c;
+ border-radius:10px;
+ overflow:hidden;
+ margin-top:4px;
+}
+
+.fill{
+ height:100%;
+}
+
+#hpFill{
+ background:#ff4164;
+}
+
+#xpFill{
+ background:#657aff;
+}
+
+#tip{
+ position:fixed;
+ z-index:20;
+ top:70px;
+ left:50%;
+ transform:translateX(-50%);
+ background:#071026dd;
+ border:1px solid #596cff;
+ border-radius:10px;
+ padding:6px 10px;
+ font-size:11px;
+ white-space:nowrap;
+}
+
+/* 무기 */
+
+#slots{
+ position:fixed;
+ z-index:90;
+ bottom:6px;
+ left:50%;
+ transform:translateX(-50%);
+ width:min(620px,96vw);
+ display:flex;
+ gap:5px;
+}
+
+.slot{
+ flex:1;
+ min-width:0;
+ height:68px;
+ padding:6px 3px;
+ background:#0d1538ee;
+ border:2px solid #354477;
+ border-radius:11px;
+ text-align:center;
+ font-size:10px;
+ cursor:pointer;
+ touch-action:manipulation;
+ user-select:none;
+}
+
+.slot.active{
+ border-color:#ffe45b;
+ box-shadow:0 0 18px #ffe45b77;
+}
+
+.slot small{
+ display:block;
+ margin-top:3px;
+ color:#b8c5ef;
+ font-size:8px;
+}
+
+/* 모바일 */
+
+#mobile{
+ display:none;
+ position:fixed;
+ inset:0;
+ z-index:100;
+ pointer-events:none;
+}
+
+#joy{
+ position:absolute;
+ left:16px;
+ bottom:92px;
+ width:115px;
+ height:115px;
+ border-radius:50%;
+ background:#172650bb;
+ border:2px solid #7182ff;
+ pointer-events:auto;
+}
+
+#knob{
+ position:absolute;
+ width:52px;
+ height:52px;
+ left:50%;
+ top:50%;
+ margin:-26px;
+ border-radius:50%;
+ background:#657affdd;
+ border:2px solid white;
+}
+
+#mfire{
+ position:absolute;
+ right:18px;
+ bottom:92px;
+ width:78px;
+ height:78px;
+ border-radius:50%;
+ background:#d93658;
+ border:3px solid #ff9aaa;
+ pointer-events:auto;
+}
+
+#mjump{
+ position:absolute;
+ right:108px;
+ bottom:48px;
+ width:58px;
+ height:58px;
+ border-radius:50%;
+ pointer-events:auto;
+}
+
+#mpoison{
+ position:absolute;
+ right:18px;
+ bottom:180px;
+ width:78px;
+ height:48px;
+ border-radius:13px;
+ background:#32a852;
+ border:2px solid #7cff8d;
+ pointer-events:auto;
+}
+
+@media(max-width:800px){
+
+ #mobile{
+  display:block;
+ }
+
+ #slots{
+  bottom:5px;
+ }
+
+ .slot{
+  height:62px;
+ }
+
+ .bar{
+  width:90px;
+ }
+
+ .hud{
+  font-size:10px;
+  min-width:100px;
+ }
+
+ #tip{
+  top:65px;
+  font-size:9px;
+ }
+}
+
+/* 패널 */
+
+.overlay{
+ position:fixed;
+ z-index:200;
+ inset:0;
+ background:#000d;
+ display:flex;
+ justify-content:center;
+ align-items:center;
+ padding:15px;
+}
+
+.panel{
+ width:min(760px,95vw);
+ max-height:90vh;
+ overflow:auto;
+ background:linear-gradient(145deg,#18224d,#080d22);
+ border:2px solid #687aff;
+ border-radius:22px;
+ padding:24px;
+ text-align:center;
+ box-shadow:0 20px 80px #000;
+}
+
+.panel h1{
+ margin-top:0;
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(3,1fr);
+ gap:10px;
+}
+
+.choice{
+ background:#17244d;
+ border:1px solid #6275ff;
+ border-radius:14px;
+ padding:13px;
+}
+
+.choice h3{
+ margin:5px 0;
+}
+
+.choice p{
+ color:#c6cff0;
+ font-size:13px;
+ line-height:1.5;
+}
+
+.rewardIcon{
+ font-size:58px;
+}
+
+.rewardName{
+ font-size:30px;
+ font-weight:bold;
+ color:#ffe45c;
+}
+
+.rewardInfo{
+ margin:15px auto;
+ max-width:470px;
+ padding:14px;
+ background:#09122e;
+ border-radius:12px;
+ line-height:1.8;
+}
+
+#bossWarning{
+ position:fixed;
+ z-index:300;
+ top:40%;
+ left:50%;
+ transform:translate(-50%,-50%) scale(.7);
+ opacity:0;
+ background:#570626ee;
+ border:3px solid #ff3970;
+ border-radius:18px;
+ padding:20px 35px;
+ font-size:30px;
+ font-weight:bold;
+ pointer-events:none;
+ transition:.25s;
+}
+
+#bossWarning.show{
+ opacity:1;
+ transform:translate(-50%,-50%) scale(1);
+}
+
+@media(max-width:450px){
+
+ .grid{
+  grid-template-columns:1fr 1fr;
+ }
+
+ .slot{
+  font-size:8px;
+ }
+
+ .slot small{
+  font-size:7px;
+ }
+
+ #joy{
+  width:105px;
+  height:105px;
+ }
+
+ #mfire{
+  width:72px;
+  height:72px;
+ }
+
+ #mpoison{
+  bottom:168px;
+ }
+}
+</style>
 </head>
+
 <body>
 
-<div id="game-container">
-    <div id="flashlight-overlay"></div>
+<canvas id="game"></canvas>
 
-    <div id="mission-box">
-        <b style="color: #ff3333; font-size: 14px;">[🚨 실시간 가이드]</b><br><br>
-        • <b style="color: #f1c40f;">R 키: 손전등 On/Off</b><br>
-        • 학교 의자: 위쪽 방향키(↑) 또는 스페이스 점프<br>
-        • 매달린 책상: Ctrl 키로 숙이기 (토글)<br>
-        • 술래 괴물의 속도가 대폭 느려졌습니다!
-    </div>
+<div id="hud">
 
-    <div id="dialogue-box">
-        "여긴 어디지...? 정신을 차려보니 어두운 교실 안이다. <br>일단 <b style='color:#f1c40f;'>[R 키]를 눌러 손전등을 켜고</b> 오른쪽 끝 문으로 가보자."
-        <div class="controls-guide">[ 클릭하면 창이 닫히며 조작이 시작됩니다 ]</div>
-    </div>
+ <div class="hud">
+  ❤️ <span id="hp">100</span>
+  <div class="bar">
+   <div id="hpFill" class="fill"></div>
+  </div>
+ </div>
 
-    <div id="game-over-screen" class="screen">
-        <h1 style="color: #ff0000; text-shadow: 0 0 15px #ff0000;">잡혔습니다.</h1>
-        <button onclick="resetGame()">다시 시도</button>
-    </div>
-    <div id="game-clear-screen" class="screen">
-        <h1 style="color: #2ecc71; text-shadow: 0 0 15px #2ecc71;">탈출에 성공했습니다.</h1>
-        <button onclick="resetGame()">다시 하기</button>
-    </div>
+ <div class="hud">
+  ⭐ Lv.<span id="level">1</span>
+  · ⚔️ <span id="attack">10</span>
+  · 💰 <span id="coins">0</span>
+  <br>
+  🏆 <span id="score">0</span>
+  <div class="bar">
+   <div id="xpFill" class="fill"></div>
+  </div>
+ </div>
 
-    <div id="chaser">
-        <div class="monster-eye"></div>
-        <div class="monster-mouth"></div>
-    </div>
-    
-    <div id="player">
-        <div class="player-eye"></div>
-        <div class="player-tag">학생</div>
-    </div>
-    
-    <div class="door" id="escape-door">
-        <div class="door-label" id="door-label">['E' 키] 문 열기</div>
-    </div>
+</div>
 
-    <!-- 촘촘하고 늘어난 학교 장애물 (추격전 시작 시 활성화) -->
-    <div class="obstacle-chair" id="obs1" style="left: 280px; top: 400px; display:none;"></div>
-    <div class="obstacle-desk"  id="obs2" style="left: 380px; top: 300px; display:none;"></div>
-    <div class="obstacle-chair" id="obs3" style="left: 490px; top: 400px; display:none;"></div>
-    <div class="obstacle-desk"  id="obs4" style="left: 580px; top: 300px; display:none;"></div>
-    <div class="obstacle-chair" id="obs5" style="left: 680px; top: 400px; display:none;"></div>
-    <div class="obstacle-desk"  id="obs6" style="left: 770px; top: 300px; display:none;"></div>
-    <div class="obstacle-chair" id="obs7" style="left: 860px; top: 400px; display:none;"></div>
-    <div class="obstacle-desk"  id="obs8" style="left: 930px; top: 300px; display:none;"></div>
-    <div class="obstacle-chair" id="obs9" style="left: 1010px; top: 400px; display:none;"></div>
+<div id="tip">
+ WASD 이동 · SHIFT 달리기 · 마우스 방향 공격
+</div>
+
+<!-- 무기 4칸 -->
+
+<div id="slots"></div>
+
+<!-- 모바일 조작 -->
+
+<div id="mobile">
+
+ <div id="joy">
+  <div id="knob"></div>
+ </div>
+
+ <button id="mfire">🔫</button>
+
+ <button id="mjump">⬆️</button>
+
+ <button id="mpoison">☠️ 독</button>
+
+</div>
+
+<div id="bossWarning">
+ 👑 BOSS 등장!
+</div>
+
+<!-- 시작 -->
+
+<div id="start" class="overlay">
+
+ <div class="panel">
+
+  <h1>⚔️ 민서 몬스터 슈터</h1>
+
+  <p>
+   몬스터를 잡고 레벨업하세요!
+  </p>
+
+  <p>
+   🎒 무기 최대 4개<br>
+   ☠️ 독 본능<br>
+   👑 보스<br>
+   🎁 보스 한정 무기
+  </p>
+
+  <button onclick="startGame()">
+   게임 시작
+  </button>
+
+ </div>
+
+</div>
+
+<!-- 레벨업 -->
+
+<div id="levelPanel" class="overlay hidden">
+
+ <div class="panel">
+
+  <h1>⭐ LEVEL UP!</h1>
+
+  <p>
+   레벨 <span id="newLevel"></span>
+  </p>
+
+  <div class="grid">
+
+   <div class="choice">
+
+    <h3>⚔️ 공격력</h3>
+
+    <p>
+     공격력 +5
+    </p>
+
+    <button onclick="levelSelect(1)">
+     선택
+    </button>
+
+   </div>
+
+   <div class="choice">
+
+    <h3>❤️ 체력</h3>
+
+    <p>
+     최대 체력 +25
+    </p>
+
+    <button onclick="levelSelect(2)">
+     선택
+    </button>
+
+   </div>
+
+   <div class="choice">
+
+    <h3>👟 속도</h3>
+
+    <p>
+     이동속도 +12%
+    </p>
+
+    <button onclick="levelSelect(3)">
+     선택
+    </button>
+
+   </div>
+
+  </div>
+
+ </div>
+
+</div>
+
+<!-- 새 무기 -->
+
+<div id="weaponPanel" class="overlay hidden">
+
+ <div class="panel">
+
+  <div class="rewardIcon">
+   🎁
+  </div>
+
+  <h2>새로운 무기!</h2>
+
+  <div id="weaponName" class="rewardName"></div>
+
+  <p id="weaponGrade"></p>
+
+  <div id="weaponInfo" class="rewardInfo"></div>
+
+  <button onclick="takeWeapon()">
+   장착하기
+  </button>
+
+ </div>
+
+</div>
+
+<!-- 무기 교체 -->
+
+<div id="replacePanel" class="overlay hidden">
+
+ <div class="panel">
+
+  <h1>🎒 무기 4칸이 가득 찼습니다!</h1>
+
+  <p>
+   버릴 무기를 눌러 새 무기를 장착하세요.
+  </p>
+
+  <div id="replaceGrid" class="grid"></div>
+
+ </div>
+
+</div>
+
+<!-- 독 -->
+
+<div id="poisonPanel" class="overlay hidden">
+
+ <div class="panel">
+
+  <h1>☠️ 독 본능</h1>
+
+  <p id="poisonWeapon"></p>
+
+  <div class="grid">
+
+   <div class="choice">
+
+    <h3>☠️ 독</h3>
+
+    <p>
+     5초 동안 지속 피해
+    </p>
+
+    <button onclick="poisonUpgrade(1)">
+     💰 120
+    </button>
+
+   </div>
+
+   <div class="choice">
+
+    <h3>🧪 강한 독</h3>
+
+    <p>
+     독 데미지 증가
+    </p>
+
+    <button onclick="poisonUpgrade(2)">
+     💰 220
+    </button>
+
+   </div>
+
+   <div class="choice">
+
+    <h3>☠️ 맹독</h3>
+
+    <p>
+     매우 강한 독
+    </p>
+
+    <button onclick="poisonUpgrade(3)">
+     💰 400
+    </button>
+
+   </div>
+
+  </div>
+
+  <br>
+
+  <button onclick="closePoison()">
+   닫기
+  </button>
+
+ </div>
+
+</div>
+
+<!-- 보스 보상 -->
+
+<div id="bossPanel" class="overlay hidden">
+
+ <div class="panel">
+
+  <h1>👑 보스 처치!</h1>
+
+  <div class="rewardIcon">
+   🎁
+  </div>
+
+  <div id="bossName" class="rewardName"></div>
+
+  <p>
+   ✨ 보스 한정 무기
+  </p>
+
+  <div id="bossInfo" class="rewardInfo"></div>
+
+  <button onclick="takeBossWeapon()">
+   획득
+  </button>
+
+ </div>
+
 </div>
 
 <script>
-    let gameState = "INTRO"; 
-    let isJumping = false;
-    let isCrouching = false; 
-    let isLightOn = false; 
-    
-    let playerX = 150;
-    let playerY = 380;
-    const floorY = 380;
-    let jumpVelocity = 0;
-    const gravity = 0.58; 
-    
-    let chaserX = -180;
-    let chaserSpeed = 1.6; // 느려진 술래 속도
-    let playerSpeed = 4.2;
+"use strict";
 
-    const keys = { Left: false, Right: false };
+/* =========================
+   CANVAS
+========================= */
 
-    const player = document.getElementById('player');
-    const chaser = document.getElementById('chaser');
-    const dialogueBox = document.getElementById('dialogue-box');
-    const missionBox = document.getElementById('mission-box');
-    const doorLabel = document.getElementById('door-label');
-    const lightOverlay = document.getElementById('flashlight-overlay');
-    const obstacles = document.querySelectorAll('[class^="obstacle-"]');
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
 
-    dialogueBox.addEventListener('click', () => {
-        if (gameState === "INTRO") {
-            dialogueBox.style.display = 'none';
-            gameState = "CLASSROOM";
-            gameLoop();
-        }
-    });
+let W=innerWidth;
+let H=innerHeight;
 
-    window.addEventListener('keydown', (e) => {
-        if (gameState === "INTRO" || gameState === "END") return;
+function resize(){
 
-        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.Left = true;
-        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.Right = true;
-        
-        if (e.code === 'KeyR') {
-            isLightOn = !isLightOn;
-        }
+ W=innerWidth;
+ H=innerHeight;
 
-        if (e.code === 'ControlLeft' || e.code === 'ControlRight') {
-            e.preventDefault(); 
-            if (!isJumping) {
-                isCrouching = !isCrouching;
-                if (isCrouching) player.classList.add('crouch');
-                else player.classList.remove('crouch');
-            }
-        }
+ canvas.width=W;
+ canvas.height=H;
+}
 
-        if ((e.code === 'ArrowUp' || e.code === 'Space') && !isJumping && !isCrouching) {
-            isJumping = true;
-            jumpVelocity = -10.8;
-        }
+resize();
 
-        /* [수정] 플레이어가 우측 끝 문(980px 지점)에 도달했을 때 정확히 E키 판정이 작동하도록 수정 */
-        if (e.code === 'KeyE' && gameState === "CLASSROOM") {
-            if (playerX >= 900 && playerX <= 1060) {
-                startChaseMode();
-            }
-        }
-        
-        if (e.code === 'KeyE' && gameState === "CHASE") {
-            if (playerX >= 930 && playerX <= 1060 && !isCrouching) {
-                endGame(true);
-            }
-        }
-    });
+addEventListener("resize",resize);
 
-    window.addEventListener('keyup', (e) => {
-        if (e.code === 'ArrowLeft' || e.code === 'KeyA') keys.Left = false;
-        if (e.code === 'ArrowRight' || e.code === 'KeyD') keys.Right = false;
-    });
+/* =========================
+   무기
+========================= */
 
-    function startChaseMode() {
-        gameState = "CHASE";
-        missionBox.style.display = 'block';
-        chaser.style.display = 'flex';
-        obstacles.forEach(obs => obs.style.display = 'block');
-        playerX = 200; // 문을 열면 앞쪽 복도로 자동 소환되며 추격 시작
-        chaserX = -120;
+const weapons=[
+
+ {
+  name:"🔫 권총",
+  damage:15,
+  cd:280,
+  count:1,
+  spread:.02,
+  speed:17,
+  color:"#ffe45c",
+  grade:"일반",
+  desc:"기본 무기"
+ },
+
+ {
+  name:"🔫 기관단총",
+  damage:8,
+  cd:100,
+  count:1,
+  spread:.13,
+  speed:19,
+  color:"#5ceaff",
+  grade:"일반",
+  desc:"빠른 연사"
+ },
+
+ {
+  name:"💥 샷건",
+  damage:11,
+  cd:600,
+  count:8,
+  spread:.55,
+  speed:14,
+  color:"#ff914d",
+  grade:"희귀",
+  desc:"8발 동시 발사"
+ },
+
+ {
+  name:"🎯 리볼버",
+  damage:40,
+  cd:450,
+  count:1,
+  spread:.01,
+  speed:22,
+  color:"#ffd06a",
+  grade:"희귀",
+  desc:"강력한 한 발"
+ },
+
+ {
+  name:"🔫 돌격소총",
+  damage:19,
+  cd:150,
+  count:1,
+  spread:.04,
+  speed:24,
+  color:"#72ff87",
+  grade:"희귀",
+  desc:"강력한 연사"
+ },
+
+ {
+  name:"🔥 미니건",
+  damage:7,
+  cd:55,
+  count:1,
+  spread:.13,
+  speed:23,
+  color:"#ff5555",
+  grade:"신화",
+  desc:"초고속 연사"
+ },
+
+ {
+  name:"⚡ 점사소총",
+  damage:17,
+  cd:280,
+  count:3,
+  spread:.08,
+  speed:24,
+  color:"#75a5ff",
+  grade:"신화",
+  desc:"3발 동시 발사"
+ },
+
+ {
+  name:"🔮 레이저",
+  damage:55,
+  cd:330,
+  count:1,
+  spread:0,
+  speed:30,
+  color:"#ff5cff",
+  grade:"신화",
+  desc:"빠른 레이저"
+ },
+
+ {
+  name:"🚀 로켓런처",
+  damage:105,
+  cd:900,
+  count:1,
+  spread:.01,
+  speed:10,
+  color:"#ff7733",
+  grade:"전설",
+  desc:"강력한 폭발"
+ },
+
+ {
+  name:"💠 플라즈마건",
+  damage:70,
+  cd:500,
+  count:2,
+  spread:.1,
+  speed:21,
+  color:"#70ff66",
+  grade:"전설",
+  desc:"강력한 플라즈마"
+ },
+
+ {
+  name:"💠 레일건",
+  damage:180,
+  cd:1100,
+  count:1,
+  spread:0,
+  speed:36,
+  color:"#72ffff",
+  grade:"전설",
+  desc:"초강력 탄환"
+ },
+
+ {
+  name:"🎯 저격총",
+  damage:350,
+  cd:1700,
+  count:1,
+  spread:.003,
+  speed:42,
+  color:"#fff",
+  grade:"전설",
+  desc:"극강의 한 발"
+ },
+
+ {
+  name:"🔥 화염방사기",
+  damage:13,
+  cd:70,
+  count:1,
+  spread:.27,
+  speed:10,
+  color:"#ff722f",
+  grade:"신화",
+  desc:"화염 공격"
+ }
+
+];
+
+const limited=[
+
+ {
+  name:"🌌 블랙홀 캐논",
+  damage:500,
+  cd:900,
+  count:1,
+  spread:.02,
+  speed:13,
+  color:"#bd5cff",
+  grade:"한정",
+  desc:"적을 끌어당김"
+ },
+
+ {
+  name:"⚡ 신의 번개",
+  damage:230,
+  cd:500,
+  count:1,
+  spread:0,
+  speed:25,
+  color:"#fff",
+  grade:"한정",
+  desc:"주변 적에게 번개"
+ },
+
+ {
+  name:"🔥 지옥 기관총",
+  damage:28,
+  cd:55,
+  count:2,
+  spread:.12,
+  speed:23,
+  color:"#ff3824",
+  grade:"한정",
+  desc:"강력한 화염 연사"
+ },
+
+ {
+  name:"❄️ 아이스 블래스터",
+  damage:95,
+  cd:650,
+  count:3,
+  spread:.3,
+  speed:18,
+  color:"#72eaff",
+  grade:"한정",
+  desc:"적을 느리게 함"
+ },
+
+ {
+  name:"💎 크리스탈 레일건",
+  damage:600,
+  cd:1800,
+  count:1,
+  spread:0,
+  speed:42,
+  color:"#7fffff",
+  grade:"한정",
+  desc:"초강력 관통"
+ }
+
+];
+
+/* =========================
+   상태
+========================= */
+
+let player;
+let enemies=[];
+let bullets=[];
+let particles=[];
+
+let slots=[];
+
+let level=1;
+let xp=0;
+let nextXP=30;
+
+let coins=0;
+let score=0;
+
+let running=false;
+let raf=false;
+
+let spawnTimer=0;
+let bossTimer=0;
+let bossAlive=false;
+
+let pendingWeapon=null;
+let bossReward=null;
+
+let keys={};
+
+let mouseX=W/2;
+let mouseY=H/2;
+let mouseDown=false;
+
+let joyX=0;
+let joyY=0;
+
+/* =========================
+   시작
+========================= */
+
+function startGame(){
+
+ document.getElementById("start")
+ .classList.add("hidden");
+
+ level=1;
+ xp=0;
+ nextXP=30;
+ coins=0;
+ score=0;
+
+ enemies=[];
+ bullets=[];
+ particles=[];
+
+ slots=[
+  {base:0,lv:1,poison:0,poisonLevel:0},
+  null,
+  null,
+  null
+ ];
+
+ player={
+  x:2500,
+  y:2500,
+  hp:100,
+  maxHp:100,
+  attack:10,
+  speed:4.2,
+  active:0,
+  cooldown:0,
+  inv:0,
+  z:0,
+  jumping:false,
+  jumpV:0
+ };
+
+ spawnTimer=0;
+ bossTimer=0;
+ bossAlive=false;
+
+ renderSlots();
+
+ running=true;
+
+ startLoop();
+}
+
+/* =========================
+   LOOP
+========================= */
+
+function startLoop(){
+
+ if(raf)return;
+
+ raf=true;
+
+ requestAnimationFrame(loop);
+}
+
+function loop(){
+
+ if(!running){
+
+  raf=false;
+  return;
+ }
+
+ update();
+ draw();
+ hud();
+
+ if(player.hp<=0){
+
+  gameOver();
+  return;
+ }
+
+ requestAnimationFrame(loop);
+}
+
+/* =========================
+   무기 함수
+========================= */
+
+function getWeapon(s){
+
+ if(s.base<weapons.length)
+  return weapons[s.base];
+
+ return limited[s.base-weapons.length];
+}
+
+function damage(s){
+
+ const w=getWeapon(s);
+
+ return Math.floor(
+  w.damage+
+  w.damage*.22*(s.lv-1)+
+  player.attack
+ );
+}
+
+function cooldown(s){
+
+ const w=getWeapon(s);
+
+ return Math.max(
+  35,
+  w.cd-(s.lv-1)*10
+ );
+}
+
+/* =========================
+   무기 슬롯
+========================= */
+
+function renderSlots(){
+
+ const box=document.getElementById("slots");
+
+ box.innerHTML="";
+
+ for(let i=0;i<4;i++){
+
+  const s=slots[i];
+  const div=document.createElement("div");
+
+  div.className=
+   "slot "+
+   (player&&player.active===i?"active":"");
+
+  if(s){
+
+   const w=getWeapon(s);
+
+   div.innerHTML=
+    `<b>${i+1}. ${w.name}</b>
+     <small>Lv.${s.lv} · ⚔️${damage(s)}</small>
+     <small>${
+      s.poison
+       ?"☠️ 독 Lv."+s.poisonLevel
+       :"☠️ 독 없음"
+     }</small>`;
+
+  }else{
+
+   div.innerHTML=
+    `<b>${i+1}. 빈 슬롯</b>
+     <small>새 무기</small>`;
+  }
+
+  /*
+   ★ 핵심
+   모바일에서는 아래 칸 자체를
+   눌러 무기를 교체한다.
+  */
+
+  div.addEventListener(
+   "pointerdown",
+   function(e){
+
+    e.preventDefault();
+    e.stopPropagation();
+
+    if(s){
+
+     player.active=i;
+
+     renderSlots();
+
+     message(
+      "🔄 "+
+      getWeapon(s).name+
+      " 장착!"
+     );
+    }
+   },
+   {passive:false}
+  );
+
+  box.appendChild(div);
+ }
+}
+
+/* =========================
+   발사
+========================= */
+
+function fire(){
+
+ if(!running||!player)
+  return;
+
+ const s=slots[player.active];
+
+ if(!s||player.cooldown>0)
+  return;
+
+ const w=getWeapon(s);
+
+ const angle=Math.atan2(
+  mouseY-H/2,
+  mouseX-W/2
+ );
+
+ player.cooldown=cooldown(s);
+
+ for(let i=0;i<w.count;i++){
+
+  const a=
+   angle+
+   (Math.random()-.5)*w.spread;
+
+  bullets.push({
+
+   x:player.x,
+   y:player.y,
+
+   vx:Math.cos(a)*w.speed,
+   vy:Math.sin(a)*w.speed,
+
+   damage:damage(s),
+
+   life:130,
+
+   color:w.color,
+
+   source:s
+  });
+ }
+}
+
+/* =========================
+   이동 / 점프
+========================= */
+
+function jump(){
+
+ if(
+  running&&
+  player.z===0&&
+  !player.jumping
+ ){
+
+  player.jumping=true;
+  player.jumpV=14;
+ }
+}
+
+/* =========================
+   레벨
+========================= */
+
+function gainXP(amount){
+
+ xp+=amount;
+
+ if(xp>=nextXP){
+
+  xp-=nextXP;
+
+  level++;
+
+  nextXP=Math.floor(nextXP*1.3);
+
+  running=false;
+
+  document.getElementById("newLevel")
+   .textContent=level;
+
+  document.getElementById("levelPanel")
+   .classList.remove("hidden");
+ }
+}
+
+function levelSelect(type){
+
+ if(type===1)
+  player.attack+=5;
+
+ if(type===2){
+
+  player.maxHp+=25;
+  player.hp=player.maxHp;
+ }
+
+ if(type===3)
+  player.speed*=1.12;
+
+ document.getElementById("levelPanel")
+ .classList.add("hidden");
+
+ /*
+  레벨업 후 새 무기 발견
+ */
+
+ if(Math.random()<.65){
+
+  const possible=[];
+
+  for(let i=1;i<weapons.length;i++){
+
+   if(
+    !slots.some(
+     s=>s&&s.base===i
+    )
+   ){
+    possible.push(i);
+   }
+  }
+
+  if(possible.length){
+
+   const id=
+    possible[
+     Math.floor(
+      Math.random()*possible.length
+     )
+    ];
+
+   pendingWeapon={
+    base:id,
+    lv:1,
+    poison:0,
+    poisonLevel:0
+   };
+
+   showWeapon();
+
+   return;
+  }
+ }
+
+ running=true;
+ startLoop();
+}
+
+/* =========================
+   무기 보상
+========================= */
+
+function showWeapon(){
+
+ const w=getWeapon(pendingWeapon);
+
+ document.getElementById("weaponName")
+ .textContent=w.name;
+
+ document.getElementById("weaponGrade")
+ .textContent="⭐ "+w.grade;
+
+ document.getElementById("weaponInfo")
+ .innerHTML=
+  "⚔️ 공격력: "+damage(pendingWeapon)+
+  "<br>🎯 탄환: "+w.count+
+  "<br>✨ "+w.desc;
+
+ document.getElementById("weaponPanel")
+ .classList.remove("hidden");
+}
+
+function takeWeapon(){
+
+ document.getElementById("weaponPanel")
+ .classList.add("hidden");
+
+ addWeapon(pendingWeapon);
+}
+
+function addWeapon(s){
+
+ const empty=slots.findIndex(v=>!v);
+
+ if(empty>=0){
+
+  slots[empty]=s;
+  player.active=empty;
+
+  pendingWeapon=null;
+
+  renderSlots();
+
+  running=true;
+  startLoop();
+
+  return;
+ }
+
+ showReplace(s);
+}
+
+function showReplace(s){
+
+ pendingWeapon=s;
+
+ const grid=
+  document.getElementById("replaceGrid");
+
+ grid.innerHTML="";
+
+ for(let i=0;i<4;i++){
+
+  const old=slots[i];
+  const w=getWeapon(old);
+
+  const div=document.createElement("div");
+
+  div.className="choice";
+
+  div.innerHTML=
+   `<h3>${w.name}</h3>
+    <p>
+     Lv.${old.lv}<br>
+     ⚔️ ${damage(old)}<br>
+     ${old.poison?"☠️ 독":"독 없음"}
+    </p>
+    <button>이 무기 버리기</button>`;
+
+  div.querySelector("button")
+   .onclick=()=>{
+
+    slots[i]=pendingWeapon;
+    player.active=i;
+
+    pendingWeapon=null;
+
+    document.getElementById("replacePanel")
+     .classList.add("hidden");
+
+    renderSlots();
+
+    running=true;
+    startLoop();
+
+    message("🔄 무기 교체 완료!");
+   };
+
+  grid.appendChild(div);
+ }
+
+ running=false;
+
+ document.getElementById("replacePanel")
+ .classList.remove("hidden");
+}
+
+/* =========================
+   독
+========================= */
+
+function openPoison(){
+
+ if(!player)
+  return;
+
+ const s=slots[player.active];
+
+ if(!s){
+
+  message("❌ 먼저 무기를 선택하세요!");
+  return;
+ }
+
+ document.getElementById("poisonWeapon")
+ .textContent=
+  getWeapon(s).name+
+  " · 현재 독 Lv."+
+  (s.poisonLevel||0);
+
+ document.getElementById("poisonPanel")
+ .classList.remove("hidden");
+}
+
+function closePoison(){
+
+ document.getElementById("poisonPanel")
+ .classList.add("hidden");
+}
+
+function poisonUpgrade(type){
+
+ const costs=[
+  0,
+  120,
+  220,
+  400
+ ];
+
+ if(coins<costs[type]){
+
+  message("💰 코인이 부족합니다!");
+  return;
+ }
+
+ const s=slots[player.active];
+
+ if(!s)return;
+
+ coins-=costs[type];
+
+ s.poison=1;
+ s.poisonLevel=Math.max(
+  s.poisonLevel||0,
+  type
+ );
+
+ renderSlots();
+
+ closePoison();
+
+ message(
+  "☠️ 독 Lv."+
+  s.poisonLevel+
+  " 강화!"
+ );
+}
+
+/* =========================
+   적 생성
+========================= */
+
+function spawnEnemy(boss=false){
+
+ const a=Math.random()*Math.PI*2;
+ const dist=800+Math.random()*700;
+
+ const hp=
+  boss
+   ?1000+level*220
+   :35+level*23;
+
+ enemies.push({
+
+  x:Math.max(
+   50,
+   Math.min(
+    4950,
+    player.x+Math.cos(a)*dist
+   )
+  ),
+
+  y:Math.max(
+   50,
+   Math.min(
+    4950,
+    player.y+Math.sin(a)*dist
+   )
+  ),
+
+  size:boss?110:35+Math.min(level*1.5,25),
+
+  hp:hp,
+  maxHp:hp,
+
+  speed:
+   boss
+    ?.65+level*.01
+    :1+Math.random()+level*.035,
+
+  damage:
+   boss
+    ?20+level
+    :5+level,
+
+  boss:boss,
+
+  poison:0,
+  poisonDamage:0,
+  slow:0
+ });
+}
+
+function spawnCount(){
+
+ if(level<=2)return 1;
+ if(level<=4)return 2;
+ if(level<=7)return 3;
+ if(level<=10)return 4;
+ if(level<=15)return 6;
+
+ return Math.min(
+  13,
+  6+Math.floor(level/3)
+ );
+}
+
+function spawnDelay(){
+
+ if(level<=2)return 1500;
+ if(level<=4)return 1100;
+ if(level<=7)return 850;
+ if(level<=10)return 650;
+
+ return Math.max(
+  280,
+  650-level*13
+ );
+}
+
+/* =========================
+   보스
+========================= */
+
+function spawnBoss(){
+
+ bossAlive=true;
+
+ spawnEnemy(true);
+
+ const b=
+  document.getElementById("bossWarning");
+
+ b.classList.add("show");
+
+ setTimeout(()=>{
+  b.classList.remove("show");
+ },2200);
+}
+
+function bossDrop(){
+
+ const r=Math.random()*100;
+
+ let id=-1;
+
+ if(r<5)id=0;
+ else if(r<13)id=1;
+ else if(r<25)id=2;
+ else if(r<40)id=3;
+ else if(r<50)id=4;
+
+ if(id<0){
+
+  message(
+   "👑 보스가 한정 무기를 드롭하지 않았습니다!"
+  );
+
+  running=true;
+  startLoop();
+
+  return;
+ }
+
+ bossReward={
+  base:weapons.length+id,
+  lv:1,
+  poison:0,
+  poisonLevel:0
+ };
+
+ const w=getWeapon(bossReward);
+
+ document.getElementById("bossName")
+ .textContent=w.name;
+
+ document.getElementById("bossInfo")
+ .innerHTML=
+  "⚔️ 공격력: "+w.damage+
+  "<br>✨ "+w.desc+
+  "<br>🎲 보스 한정 무기";
+
+ document.getElementById("bossPanel")
+ .classList.remove("hidden");
+
+ running=false;
+}
+
+function takeBossWeapon(){
+
+ document.getElementById("bossPanel")
+ .classList.add("hidden");
+
+ pendingWeapon=bossReward;
+
+ bossReward=null;
+
+ addWeapon(pendingWeapon);
+}
+
+/* =========================
+   UPDATE
+========================= */
+
+function update(){
+
+ let dx=0;
+ let dy=0;
+
+ if(keys.w||keys.arrowup)dy--;
+ if(keys.s||keys.arrowdown)dy++;
+ if(keys.a||keys.arrowleft)dx--;
+ if(keys.d||keys.arrowright)dx++;
+
+ dx+=joyX;
+ dy+=joyY;
+
+ if(dx||dy){
+
+  const len=Math.hypot(dx,dy);
+
+  const speed=
+   player.speed*
+   (keys.shift?1.7:1);
+
+  player.x+=dx/len*speed;
+  player.y+=dy/len*speed;
+ }
+
+ player.x=Math.max(
+  30,
+  Math.min(4970,player.x)
+ );
+
+ player.y=Math.max(
+  30,
+  Math.min(4970,player.y)
+ );
+
+ /* 점프 */
+
+ if(player.jumping){
+
+  player.jumpV-=.7;
+  player.z+=player.jumpV;
+
+  if(player.z<=0){
+
+   player.z=0;
+   player.jumping=false;
+  }
+ }
+
+ player.cooldown=
+  Math.max(
+   0,
+   player.cooldown-16
+  );
+
+ player.inv=
+  Math.max(
+   0,
+   player.inv-16
+  );
+
+ if(mouseDown)
+  fire();
+
+ /* 적 생성 */
+
+ spawnTimer-=16;
+
+ if(spawnTimer<=0){
+
+  for(
+   let i=0;
+   i<spawnCount();
+   i++
+  ){
+   spawnEnemy();
+  }
+
+  spawnTimer=spawnDelay();
+ }
+
+ /* 보스 45초 */
+
+ bossTimer+=16;
+
+ if(
+  bossTimer>=45000&&
+  !bossAlive
+ ){
+
+  bossTimer=0;
+  spawnBoss();
+ }
+
+ /* 총알 */
+
+ for(const b of bullets){
+
+  b.x+=b.vx;
+  b.y+=b.vy;
+  b.life--;
+
+  for(const e of enemies){
+
+   if(
+    Math.hypot(
+     b.x-e.x,
+     b.y-e.y
+    )<
+    e.size/2+8
+   ){
+
+    e.hp-=b.damage;
+
+    b.life=0;
+
+    const source=b.source;
+    const w=getWeapon(source);
+
+    /* 독 */
+
+    if(source.poison){
+
+     const lv=
+      source.poisonLevel||1;
+
+     e.poison=5000;
+
+     e.poisonDamage=
+      lv*
+      (3+b.damage*.025);
+
+     particle(
+      e.x,
+      e.y,
+      5,
+      "#55ff55"
+     );
     }
 
-    function gameLoop() {
-        if (gameState === "INTRO" || gameState === "END") return;
+    /* 블랙홀 */
 
-        let currentSpeed = isCrouching ? playerSpeed * 0.45 : playerSpeed;
-        if (keys.Left) playerX -= currentSpeed;
-        if (keys.Right) playerX += currentSpeed;
+    if(w.name.includes("블랙홀")){
 
-        /* [버그 수정 핵심] 우측 이동 제한 장벽을 750px -> 1050px로 늘려 문 앞까지 갈 수 있게 만듦 */
-        if (playerX < 0) playerX = 0;
-        if (playerX > 1050) playerX = 1050; 
-
-        if (isJumping) {
-            playerY += jumpVelocity;
-            jumpVelocity += gravity;
-            if (playerY >= floorY) { playerY = floorY; isJumping = false; jumpVelocity = 0; }
-        }
-
-        if (gameState === "CHASE") {
-            chaserX += chaserSpeed;
-            if (chaserX + 95 >= playerX + 12) { endGame(false); return; }
-        }
-
-        let targetY = isCrouching && !isJumping ? 412 : playerY;
-        let centerX = playerX + 22; 
-        let centerY = targetY + (isCrouching ? 19 : 35); 
-
-        // 전방 라이트 시스템
-        if (isLightOn) {
-            if (gameState === "CHASE") {
-                lightOverlay.style.background = `linear-gradient(to right, rgba(0,0,0,0.99) ${centerX - 60}px, rgba(50, 0, 0, 0.15) ${centerX + 20}px, rgba(40, 0, 0, 0.15) 100%)`;
-            } else {
-                lightOverlay.style.background = `linear-gradient(to right, rgba(0,0,0,0.99) ${centerX - 50}px, rgba(0,0,0,0) ${centerX + 30}px, rgba(0,0,0,0) 100%)`;
-            }
-        } else {
-            lightOverlay.style.background = `radial-gradient(circle 35px at ${centerX}px ${centerY}px, transparent 100%, rgba(0, 0, 0, 0.99) 100%)`;
-        }
-
-        // 장애물 충돌 (추격전 때만 작동)
-        if (gameState === "CHASE") {
-            obstacles.forEach(obs => {
-                let obsX = parseInt(obs.style.left);
-                let obsY = parseInt(obs.style.top);
-                
-                if (obs.classList.contains('obstacle-desk')) {
-                    if (playerX + 45 > obsX && playerX < obsX + 75) {
-                        if (!isCrouching) playerX = obsX - 46; 
-                    }
-                } else {
-                    if (playerX + 45 > obsX && playerX < obsX + 40) {
-                        if (isJumping && jumpVelocity > 0 && playerY + 70 >= obsY && playerY + 50 < obsY) {
-                            playerY = obsY - 70; isJumping = false; jumpVelocity = 0;
-                        } else if (playerY + 70 > obsY) {
-                            if (keys.Right && playerX < obsX) playerX = obsX - 45;
-                            if (keys.Left && playerX > obsX) playerX = obsX + 40;
-                        }
-                    }
-                }
-            });
-        }
-
-        /* [수정] 문 근처에 갔을 때의 텍스트 UI 판정 범위 확장 */
-        if (gameState === "CLASSROOM" && playerX >= 900) {
-            doorLabel.style.display = 'block'; doorLabel.innerText = "[E 키] 문 열기";
-        } else if (gameState === "CHASE" && playerX >= 930) {
-            doorLabel.style.display = 'block'; doorLabel.innerText = "[E 키] 탈출하기!";
-        } else {
-            doorLabel.style.display = 'none';
-        }
-
-        player.style.left = playerX + 'px';
-        player.style.top = targetY + 'px';
-        chaser.style.left = chaserX + 'px';
-
-        requestAnimationFrame(gameLoop);
+     e.x+=(player.x-e.x)*.09;
+     e.y+=(player.y-e.y)*.09;
     }
 
-    function endGame(isWin) {
-        gameState = "END";
-        if (isWin) document.getElementById('game-clear-screen').style.display = 'flex';
-        else document.getElementById('game-over-screen').style.display = 'flex';
+    /* 아이스 */
+
+    if(w.name.includes("아이스"))
+     e.slow=3500;
+
+    /* 번개 */
+
+    if(w.name.includes("번개")){
+
+     for(const o of enemies){
+
+      if(
+       o!==e&&
+       Math.hypot(
+        o.x-e.x,
+        o.y-e.y
+       )<190
+      ){
+
+       o.hp-=b.damage*.35;
+
+       particle(
+        o.x,
+        o.y,
+        5,
+        "#fff"
+       );
+      }
+     }
     }
 
-    function resetGame() {
-        gameState = "INTRO"; isJumping = false; isCrouching = false; isLightOn = false;
-        playerX = 150; playerY = 380; chaserX = -180;
-        player.className = "";
-        player.style.left = playerX + 'px'; player.style.top = playerY + 'px';
-        chaser.style.left = chaserX + 'px'; chaser.style.display = 'none';
-        
-        document.getElementById('game-over-screen').style.display = 'none';
-        document.getElementById('game-clear-screen').style.display = 'none';
-        doorLabel.style.display = 'none'; missionBox.style.display = 'none';
-        obstacles.forEach(obs => obs.style.display = 'none');
-        
-        dialogueBox.innerHTML = `"여긴 어디지...? 정신을 차려보니 어두운 교실 안이다. <br>일단 <b style='color:#f1c40f;'>[R 키]를 눌러 손전등을 켜고</b> 오른쪽 끝 문으로 가보자."<div class="controls-guide">[ 클릭하면 창이 닫히며 조작이 시작됩니다 ]</div>`;
-        dialogueBox.style.display = 'block';
+    particle(
+     b.x,
+     b.y,
+     6,
+     b.color
+    );
+
+    break;
+   }
+  }
+ }
+
+ bullets=
+  bullets.filter(
+   b=>b.life>0
+  );
+
+ /* 적 */
+
+ for(const e of enemies){
+
+  if(e.poison>0){
+
+   e.poison-=16;
+
+   e.hp-=
+    e.poisonDamage/60;
+  }
+
+  if(e.slow>0)
+   e.slow-=16;
+
+  const dx=
+   player.x-e.x;
+
+  const dy=
+   player.y-e.y;
+
+  const dist=
+   Math.hypot(dx,dy)||1;
+
+  const sp=
+   e.speed*
+   (e.slow>0?.42:1);
+
+  e.x+=dx/dist*sp;
+  e.y+=dy/dist*sp;
+
+  if(
+   Math.hypot(
+    player.x-e.x,
+    player.y-e.y
+   )<
+   42+e.size/2&&
+   player.inv<=0&&
+   !player.jumping
+  ){
+
+   player.hp-=e.damage;
+
+   player.inv=800;
+
+   particle(
+    player.x,
+    player.y,
+    15,
+    "#ff4164"
+   );
+  }
+ }
+
+ /* 죽은 적 */
+
+ enemies=
+  enemies.filter(e=>{
+
+   if(e.hp<=0){
+
+    score+=e.boss?300:10;
+
+    coins+=
+     e.boss
+      ?100
+      :4+Math.floor(
+       Math.random()*8
+      );
+
+    gainXP(
+     e.boss
+      ?150
+      :12
+    );
+
+    particle(
+     e.x,
+     e.y,
+     e.boss?60:18,
+     e.boss?"#ff4d91":"#ffd43b"
+    );
+
+    if(e.boss){
+
+     bossAlive=false;
+
+     setTimeout(
+      bossDrop,
+      300
+     );
     }
+
+    return false;
+   }
+
+   return true;
+  });
+
+ /* 파티클 */
+
+ for(const p of particles){
+
+  p.x+=p.vx;
+  p.y+=p.vy;
+  p.vy+=.1;
+  p.life--;
+ }
+
+ particles=
+  particles.filter(
+   p=>p.life>0
+  );
+}
+
+/* =========================
+   DRAW
+========================= */
+
+function camera(){
+
+ return{
+
+  x:Math.max(
+   0,
+   Math.min(
+    5000-W,
+    player.x-W/2
+   )
+  ),
+
+  y:Math.max(
+   0,
+   Math.min(
+    5000-H,
+    player.y-H/2
+   )
+  )
+ };
+}
+
+function draw(){
+
+ const cam=camera();
+
+ ctx.clearRect(0,0,W,H);
+
+ ctx.save();
+
+ ctx.translate(
+  -cam.x,
+  -cam.y
+ );
+
+ /* 맵 */
+
+ ctx.fillStyle="#09132d";
+
+ ctx.fillRect(
+  0,0,5000,5000
+ );
+
+ ctx.strokeStyle="#14254a";
+
+ for(let i=0;i<=5000;i+=100){
+
+  ctx.beginPath();
+  ctx.moveTo(i,0);
+  ctx.lineTo(i,5000);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.moveTo(0,i);
+  ctx.lineTo(5000,i);
+  ctx.stroke();
+ }
+
+ ctx.strokeStyle="#536fe0";
+ ctx.lineWidth=8;
+
+ ctx.strokeRect(
+  20,20,4960,4960
+ );
+
+ ctx.lineWidth=1;
+
+ /* 적 */
+
+ for(const e of enemies){
+
+  ctx.fillStyle=
+   e.boss
+    ?"#bd2d76"
+    :"#b93d57";
+
+  ctx.shadowBlur=
+   e.boss?28:8;
+
+  ctx.shadowColor=
+   ctx.fillStyle;
+
+  ctx.beginPath();
+
+  ctx.arc(
+   e.x,
+   e.y,
+   e.size/2,
+   0,
+   Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.shadowBlur=0;
+
+  if(e.poison>0){
+
+   ctx.strokeStyle="#55ff55";
+   ctx.lineWidth=5;
+
+   ctx.beginPath();
+
+   ctx.arc(
+    e.x,
+    e.y,
+    e.size/2+6,
+    0,
+    Math.PI*2
+   );
+
+   ctx.stroke();
+
+   ctx.lineWidth=1;
+  }
+
+  /* HP */
+
+  ctx.fillStyle="#292938";
+
+  ctx.fillRect(
+   e.x-e.size/2,
+   e.y-e.size/2-12,
+   e.size,
+   7
+  );
+
+  ctx.fillStyle=
+   e.poison>0
+    ?"#55ff55"
+    :"#ff4d6d";
+
+  ctx.fillRect(
+   e.x-e.size/2,
+   e.y-e.size/2-12,
+   e.size*
+   Math.max(
+    0,
+    e.hp/e.maxHp
+   ),
+   7
+  );
+
+  if(e.boss){
+
+   ctx.fillStyle="#ffe45b";
+   ctx.font="bold 20px Arial";
+   ctx.textAlign="center";
+
+   ctx.fillText(
+    "👑 BOSS",
+    e.x,
+    e.y-e.size/2-22
+   );
+  }
+ }
+
+ /* 총알 */
+
+ for(const b of bullets){
+
+  ctx.fillStyle=b.color;
+
+  ctx.shadowBlur=15;
+  ctx.shadowColor=b.color;
+
+  ctx.beginPath();
+
+  ctx.arc(
+   b.x,
+   b.y,
+   5,
+   0,
+   Math.PI*2
+  );
+
+  ctx.fill();
+
+  ctx.shadowBlur=0;
+ }
+
+ /* 파티클 */
+
+ for(const p of particles){
+
+  ctx.globalAlpha=
+   Math.max(
+    0,
+    p.life/40
+   );
+
+  ctx.fillStyle=p.color;
+
+  ctx.fillRect(
+   p.x,
+   p.y,
+   5,
+   5
+  );
+ }
+
+ ctx.globalAlpha=1;
+
+ /* 플레이어 */
+
+ const py=
+  player.y-player.z;
+
+ if(
+  player.inv<=0||
+  Math.floor(player.inv/100)%2===0
+ ){
+
+  ctx.fillStyle="#62eaff";
+
+  ctx.shadowBlur=20;
+  ctx.shadowColor="#62eaff";
+
+  ctx.fillRect(
+   player.x-21,
+   py-21,
+   42,
+   42
+  );
+
+  ctx.shadowBlur=0;
+
+  const s=slots[player.active];
+
+  if(s){
+
+   const angle=Math.atan2(
+    mouseY-H/2,
+    mouseX-W/2
+   );
+
+   ctx.save();
+
+   ctx.translate(
+    player.x,
+    py
+   );
+
+   ctx.rotate(angle);
+
+   ctx.fillStyle=
+    getWeapon(s).color;
+
+   ctx.fillRect(
+    3,-5,42,10
+   );
+
+   ctx.restore();
+  }
+ }
+
+ ctx.restore();
+}
+
+/* =========================
+   HUD
+========================= */
+
+function hud(){
+
+ if(!player)return;
+
+ document.getElementById("hp")
+ .textContent=Math.max(
+  0,
+  Math.ceil(player.hp)
+ );
+
+ document.getElementById("level")
+ .textContent=level;
+
+ document.getElementById("attack")
+ .textContent=player.attack;
+
+ document.getElementById("coins")
+ .textContent=coins;
+
+ document.getElementById("score")
+ .textContent=score;
+
+ document.getElementById("hpFill")
+ .style.width=
+  Math.max(
+   0,
+   player.hp/player.maxHp*100
+  )+"%";
+
+ document.getElementById("xpFill")
+ .style.width=
+  Math.min(
+   100,
+   xp/nextXP*100
+  )+"%";
+}
+
+/* =========================
+   GAME OVER
+========================= */
+
+function gameOver(){
+
+ running=false;
+ raf=false;
+
+ document.querySelector(
+  "#start h1"
+ ).textContent="💀 GAME OVER";
+
+ document.querySelector(
+  "#start p"
+ ).innerHTML=
+  "점수 "+score+
+  " · 레벨 "+level+
+  " · 코인 "+coins+
+  "<br><br>다시 도전하세요!";
+
+ document.getElementById("start")
+ .classList.remove("hidden");
+}
+
+/* =========================
+   키보드
+========================= */
+
+addEventListener(
+ "keydown",
+ e=>{
+
+  keys[e.key.toLowerCase()]=true;
+
+  if(e.key===" ")
+   jump();
+
+  if(e.key.toLowerCase()==="f")
+   fire();
+
+  if("1234".includes(e.key))
+   selectWeapon(
+    Number(e.key)-1
+   );
+
+  if(e.key.toLowerCase()==="i")
+   openPoison();
+ });
+
+addEventListener(
+ "keyup",
+ e=>{
+  keys[e.key.toLowerCase()]=false;
+ });
+
+function selectWeapon(i){
+
+ if(!slots[i])return;
+
+ player.active=i;
+
+ renderSlots();
+
+ message(
+  "🔄 "+
+  getWeapon(slots[i]).name+
+  " 장착!"
+ );
+}
+
+/* =========================
+   마우스
+========================= */
+
+canvas.addEventListener(
+ "mousemove",
+ e=>{
+
+  mouseX=e.clientX;
+  mouseY=e.clientY;
+ });
+
+canvas.addEventListener(
+ "mousedown",
+ e=>{
+
+  mouseX=e.clientX;
+  mouseY=e.clientY;
+
+  mouseDown=true;
+
+  fire();
+ });
+
+addEventListener(
+ "mouseup",
+ ()=>{
+  mouseDown=false;
+ });
+
+/* =========================
+   모바일 조이스틱
+========================= */
+
+const joy=
+ document.getElementById("joy");
+
+const knob=
+ document.getElementById("knob");
+
+let joyID=null;
+
+joy.addEventListener(
+ "pointerdown",
+ e=>{
+
+  e.preventDefault();
+
+  joyID=e.pointerId;
+
+  joy.setPointerCapture(e.pointerId);
+
+  moveJoy(e);
+ },
+ {passive:false}
+);
+
+joy.addEventListener(
+ "pointermove",
+ e=>{
+
+  if(e.pointerId===joyID)
+   moveJoy(e);
+ },
+ {passive:false}
+);
+
+joy.addEventListener(
+ "pointerup",
+ resetJoy,
+ {passive:false}
+);
+
+joy.addEventListener(
+ "pointercancel",
+ resetJoy,
+ {passive:false}
+);
+
+function moveJoy(e){
+
+ const r=joy.getBoundingClientRect();
+
+ const cx=r.left+r.width/2;
+ const cy=r.top+r.height/2;
+
+ let x=e.clientX-cx;
+ let y=e.clientY-cy;
+
+ const max=r.width*.38;
+
+ const len=Math.hypot(x,y);
+
+ if(len>max){
+
+  x=x/len*max;
+  y=y/len*max;
+ }
+
+ joyX=x/max;
+ joyY=y/max;
+
+ knob.style.transform=
+  `translate(${x}px,${y}px)`;
+}
+
+function resetJoy(){
+
+ joyX=0;
+ joyY=0;
+
+ knob.style.transform=
+  "translate(0,0)";
+}
+
+/* =========================
+   모바일 공격
+========================= */
+
+const mfire=
+ document.getElementById("mfire");
+
+mfire.addEventListener(
+ "pointerdown",
+ e=>{
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  mouseDown=true;
+
+  fire();
+ },
+ {passive:false}
+);
+
+mfire.addEventListener(
+ "pointerup",
+ e=>{
+
+  e.preventDefault();
+
+  mouseDown=false;
+ },
+ {passive:false}
+);
+
+mfire.addEventListener(
+ "pointercancel",
+ ()=>{
+  mouseDown=false;
+ }
+);
+
+/* =========================
+   모바일 점프
+========================= */
+
+document.getElementById("mjump")
+ .addEventListener(
+  "pointerdown",
+  e=>{
+
+   e.preventDefault();
+   e.stopPropagation();
+
+   jump();
+  },
+  {passive:false}
+ );
+
+/* =========================
+   ★ 모바일 독 버튼
+========================= */
+
+document.getElementById("mpoison")
+ .addEventListener(
+  "pointerdown",
+  e=>{
+
+   e.preventDefault();
+   e.stopPropagation();
+
+   openPoison();
+  },
+  {passive:false}
+ );
+
+/* =========================
+   모바일 화면 터치로
+   공격 방향 설정
+========================= */
+
+canvas.addEventListener(
+ "pointerdown",
+ e=>{
+
+  if(e.pointerType==="touch"){
+
+   mouseX=e.clientX;
+   mouseY=e.clientY;
+  }
+ },
+ {passive:false}
+);
+
+/* =========================
+   메시지
+========================= */
+
+function message(text){
+
+ const t=
+  document.getElementById("tip");
+
+ const old=t.textContent;
+
+ t.textContent=text;
+
+ setTimeout(()=>{
+
+  if(t.textContent===text)
+   t.textContent=old;
+
+ },1300);
+}
+
+/* =========================
+   파티클
+========================= */
+
+function particle(x,y,n,color){
+
+ for(let i=0;i<n;i++){
+
+  particles.push({
+
+   x:x,
+   y:y,
+
+   vx:(Math.random()-.5)*8,
+   vy:(Math.random()-.5)*8,
+
+   life:25+Math.random()*35,
+
+   color:color
+  });
+ }
+}
+
+/* =========================
+   저장
+========================= */
+
+setInterval(()=>{
+
+ if(!player)return;
+
+ try{
+
+  localStorage.setItem(
+   "minseoShooter",
+   JSON.stringify({
+
+    level:level,
+    xp:xp,
+    nextXP:nextXP,
+    coins:coins,
+    score:score,
+
+    slots:slots,
+
+    attack:player.attack,
+    maxHp:player.maxHp,
+    speed:player.speed
+
+   })
+  );
+
+ }catch(e){}
+
+},5000);
+
 </script>
+
 </body>
 </html>

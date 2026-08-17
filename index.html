@@ -2,2600 +2,1369 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<title>민서 몬스터 슈터</title>
-
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>RANDOM ESCAPE</title>
 <style>
-*{
- box-sizing:border-box;
- -webkit-tap-highlight-color:transparent;
-}
-
-html,body{
- margin:0;
- width:100%;
- height:100%;
- overflow:hidden;
- background:#050817;
- color:white;
- font-family:Arial,sans-serif;
- touch-action:none;
-}
-
-canvas{
- display:block;
- width:100%;
- height:100%;
-}
-
-button{
- border:0;
- border-radius:12px;
- background:#596cff;
- color:white;
- padding:12px 17px;
- font-weight:bold;
- font-size:15px;
- touch-action:manipulation;
-}
-
-button:active{
- transform:scale(.93);
-}
-
-.hidden{
- display:none!important;
-}
-
-/* HUD */
-
-#hud{
- position:fixed;
- z-index:20;
- top:8px;
- left:8px;
- right:8px;
- display:flex;
- justify-content:space-between;
- pointer-events:none;
-}
-
-.hud{
- background:#0b1435ee;
- border:2px solid #596cff;
- border-radius:13px;
- padding:7px 10px;
- font-size:13px;
-}
-
-.bar{
- width:150px;
- height:8px;
- background:#24283c;
- border-radius:10px;
- overflow:hidden;
- margin-top:4px;
-}
-
-.fill{
- height:100%;
-}
-
-#hpFill{
- background:#ff4164;
-}
-
-#xpFill{
- background:#657aff;
-}
-
-#tip{
- position:fixed;
- z-index:20;
- top:70px;
- left:50%;
- transform:translateX(-50%);
- background:#071026dd;
- border:1px solid #596cff;
- border-radius:10px;
- padding:6px 10px;
- font-size:11px;
- white-space:nowrap;
-}
-
-/* 무기 */
-
-#slots{
- position:fixed;
- z-index:90;
- bottom:6px;
- left:50%;
- transform:translateX(-50%);
- width:min(620px,96vw);
- display:flex;
- gap:5px;
-}
-
-.slot{
- flex:1;
- min-width:0;
- height:68px;
- padding:6px 3px;
- background:#0d1538ee;
- border:2px solid #354477;
- border-radius:11px;
- text-align:center;
- font-size:10px;
- cursor:pointer;
- touch-action:manipulation;
- user-select:none;
-}
-
-.slot.active{
- border-color:#ffe45b;
- box-shadow:0 0 18px #ffe45b77;
-}
-
-.slot small{
- display:block;
- margin-top:3px;
- color:#b8c5ef;
- font-size:8px;
-}
-
-/* 모바일 */
-
-#mobile{
- display:none;
- position:fixed;
- inset:0;
- z-index:100;
- pointer-events:none;
-}
-
-#joy{
- position:absolute;
- left:16px;
- bottom:92px;
- width:115px;
- height:115px;
- border-radius:50%;
- background:#172650bb;
- border:2px solid #7182ff;
- pointer-events:auto;
-}
-
-#knob{
- position:absolute;
- width:52px;
- height:52px;
- left:50%;
- top:50%;
- margin:-26px;
- border-radius:50%;
- background:#657affdd;
- border:2px solid white;
-}
-
-#mfire{
- position:absolute;
- right:18px;
- bottom:92px;
- width:78px;
- height:78px;
- border-radius:50%;
- background:#d93658;
- border:3px solid #ff9aaa;
- pointer-events:auto;
-}
-
-#mjump{
- position:absolute;
- right:108px;
- bottom:48px;
- width:58px;
- height:58px;
- border-radius:50%;
- pointer-events:auto;
-}
-
-#mpoison{
- position:absolute;
- right:18px;
- bottom:180px;
- width:78px;
- height:48px;
- border-radius:13px;
- background:#32a852;
- border:2px solid #7cff8d;
- pointer-events:auto;
-}
-
-@media(max-width:800px){
-
- #mobile{
-  display:block;
- }
-
- #slots{
-  bottom:5px;
- }
-
- .slot{
-  height:62px;
- }
-
- .bar{
-  width:90px;
- }
-
- .hud{
-  font-size:10px;
-  min-width:100px;
- }
-
- #tip{
-  top:65px;
-  font-size:9px;
- }
-}
-
-/* 패널 */
-
-.overlay{
- position:fixed;
- z-index:200;
- inset:0;
- background:#000d;
- display:flex;
- justify-content:center;
- align-items:center;
- padding:15px;
-}
-
-.panel{
- width:min(760px,95vw);
- max-height:90vh;
- overflow:auto;
- background:linear-gradient(145deg,#18224d,#080d22);
- border:2px solid #687aff;
- border-radius:22px;
- padding:24px;
- text-align:center;
- box-shadow:0 20px 80px #000;
-}
-
-.panel h1{
- margin-top:0;
-}
-
-.grid{
- display:grid;
- grid-template-columns:repeat(3,1fr);
- gap:10px;
-}
-
-.choice{
- background:#17244d;
- border:1px solid #6275ff;
- border-radius:14px;
- padding:13px;
-}
-
-.choice h3{
- margin:5px 0;
-}
-
-.choice p{
- color:#c6cff0;
- font-size:13px;
- line-height:1.5;
-}
-
-.rewardIcon{
- font-size:58px;
-}
-
-.rewardName{
- font-size:30px;
- font-weight:bold;
- color:#ffe45c;
-}
-
-.rewardInfo{
- margin:15px auto;
- max-width:470px;
- padding:14px;
- background:#09122e;
- border-radius:12px;
- line-height:1.8;
-}
-
-#bossWarning{
- position:fixed;
- z-index:300;
- top:40%;
- left:50%;
- transform:translate(-50%,-50%) scale(.7);
- opacity:0;
- background:#570626ee;
- border:3px solid #ff3970;
- border-radius:18px;
- padding:20px 35px;
- font-size:30px;
- font-weight:bold;
- pointer-events:none;
- transition:.25s;
-}
-
-#bossWarning.show{
- opacity:1;
- transform:translate(-50%,-50%) scale(1);
-}
-
-@media(max-width:450px){
-
- .grid{
-  grid-template-columns:1fr 1fr;
- }
-
- .slot{
-  font-size:8px;
- }
-
- .slot small{
-  font-size:7px;
- }
-
- #joy{
-  width:105px;
-  height:105px;
- }
-
- #mfire{
-  width:72px;
-  height:72px;
- }
-
- #mpoison{
-  bottom:168px;
- }
+*{box-sizing:border-box}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,"Noto Sans KR",sans-serif;background:#05080d;color:#fff}
+button{border:0;border-radius:14px;padding:13px 20px;font-weight:900;cursor:pointer}
+#app{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 45%,#26384d,#0b111b 55%,#03050a)}
+#start{position:absolute;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1d334c,#05070c 72%)}
+.start{width:min(900px,94vw);text-align:center}
+.start h1{margin:0;font-size:clamp(44px,9vw,88px);letter-spacing:5px}
+.start h1 span{color:#62f2bd}
+.start p{color:#aebbd0;line-height:1.8}
+.diff{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:25px 0}
+.d{padding:20px 10px;background:#0d1522;color:#fff;border:1px solid #34455d}
+.d b{display:block;font-size:21px;margin-bottom:8px}
+.d small{color:#9aaac0}
+.d.sel{outline:3px solid #62f2bd;background:#102a20;transform:translateY(-4px)}
+.startBtn{background:#62f2bd;color:#06140f;font-size:20px;padding:17px 38px}
+#hud{position:absolute;z-index:100;top:0;left:0;right:0;padding:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
+.group{display:flex;gap:7px;flex-wrap:wrap}
+.badge{background:#08111de8;border:1px solid #40516c;border-radius:12px;padding:8px 12px;font-size:13px;box-shadow:0 8px 25px #0008}
+.badge b{color:#68f3c0}
+#world{position:absolute;inset:0}
+.floor{position:absolute;left:4%;top:12%;width:92%;height:78%;border:3px solid #46566e;background:repeating-linear-gradient(90deg,#171f2a 0 47px,#1d2733 48px 49px),repeating-linear-gradient(0deg,transparent 0 47px,#0002 48px 49px);box-shadow:inset 0 0 100px #000d}
+.wall{position:absolute;z-index:2;background:linear-gradient(135deg,#4a586e,#202a39);border:2px solid #687b96;box-shadow:inset 0 0 25px #0009,0 10px 30px #0009}
+.obj{position:absolute;z-index:30;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;pointer-events:auto}
+.obj:hover{transform:scale(1.05);filter:brightness(1.3)}
+.panel{background:#07111c;border:3px solid #627695;border-radius:11px;flex-direction:column;color:#68f5c4;font-family:monospace;box-shadow:0 10px 30px #000}
+.panel b{font-size:22px;letter-spacing:3px}
+.panel small{color:#91a0b5;font-family:Arial;margin-top:6px}
+.door{width:105px;height:160px;border:5px solid #aa7048;border-radius:12px 12px 3px 3px;background:linear-gradient(90deg,#27150f,#754126,#351c13);box-shadow:inset 0 0 25px #000,0 12px 30px #000;flex-direction:column}
+.door strong{font-size:28px}
+.door span{font-size:11px;color:#ffe0c1}
+.item{width:72px;height:72px;border-radius:17px;background:#091423ee;border:2px solid #72839e;box-shadow:0 10px 25px #000;flex-direction:column;font-size:29px}
+.item small{font-size:10px;color:#aebbd0;margin-top:3px}
+.note{width:165px;min-height:95px;padding:12px;background:#ded09a;color:#332d21;box-shadow:0 12px 25px #0009;font-size:12px;line-height:1.5;display:block}
+.note:hover{transform:rotate(0) scale(1.05)}
+.fake{border-color:#9c4444!important}
+#inventory{position:absolute;z-index:120;right:12px;bottom:12px;display:flex;gap:6px}
+.slot{width:46px;height:46px;border-radius:11px;border:1px solid #455873;background:#0b1421e8;display:flex;align-items:center;justify-content:center;font-size:22px}
+#msg{position:absolute;z-index:200;left:50%;bottom:35px;transform:translateX(-50%);width:min(680px,90vw);padding:14px 18px;text-align:center;border:1px solid #4c5e7a;border-radius:14px;background:#050a13ee;box-shadow:0 15px 45px #000c;opacity:0;transition:.2s;pointer-events:none}
+#modal{position:absolute;z-index:500;inset:0;display:none;align-items:center;justify-content:center;background:#02040bdc;backdrop-filter:blur(7px)}
+.card{width:min(600px,92vw);padding:30px;border-radius:22px;border:1px solid #4c5e7b;background:linear-gradient(145deg,#151e2d,#080d15);box-shadow:0 30px 100px #000}
+.card h2{margin:0 0 10px;font-size:30px}
+.card p{color:#adbacd;line-height:1.7}
+.input{width:100%;padding:16px;border-radius:12px;border:2px solid #536984;background:#050a12;color:#6dffd0;font-size:30px;text-align:center;letter-spacing:7px;outline:none}
+.input:focus{border-color:#62f2bd;box-shadow:0 0 20px #62f2bd33}
+.actions{display:flex;gap:10px;margin-top:14px}
+.ok{background:#62f2bd;color:#06140f}
+.cancel{background:#29364a;color:#fff}
+#warning{position:absolute;z-index:800;inset:0;display:none;align-items:center;justify-content:center;background:#8d000022;pointer-events:none}
+.warning{color:#ff5050;text-align:center;font-size:clamp(30px,6vw,72px);font-weight:1000;text-shadow:0 0 25px red,4px 4px #000;animation:pulse .18s infinite alternate}
+.warning small{display:block;font-size:19px;margin-top:10px}
+#limit{position:absolute;z-index:110;left:50%;top:78px;transform:translateX(-50%);padding:8px 15px;border-radius:12px;background:#350d0d;border:1px solid #a53b3b;color:#ff8c8c;display:none;font-weight:900}
+.shake{animation:shake .08s infinite}
+@keyframes shake{0%{transform:translate(0)}25%{transform:translate(5px,-3px)}50%{transform:translate(-5px,4px)}75%{transform:translate(3px,3px)}100%{transform:translate(-3px,-4px)}}
+@keyframes pulse{from{opacity:.2}to{opacity:1}}
+@media(max-width:720px){
+.diff{grid-template-columns:2fr 2fr}
+.d{padding:14px 6px}
+.badge{font-size:11px}
+.door{width:82px;height:125px}
 }
 </style>
 </head>
 
 <body>
+<div id="app">
 
-<canvas id="game"></canvas>
+<div id="start">
+<div class="start">
+<h1>RANDOM <span>ESCAPE</span></h1>
+<p>
+10개의 방을 탈출하세요.<br>
+난이도가 올라갈수록 암호가 복잡해지고 가짜 출구와 함정이 늘어납니다.
+</p>
+
+<div class="diff">
+<button class="d sel" data-d="easy">
+<b>🟢 쉬움</b>
+<small>힌트 많음 · 함정 적음</small>
+</button>
+
+<button class="d" data-d="normal">
+<b>🟡 보통</b>
+<small>기본 난이도</small>
+</button>
+
+<button class="d" data-d="hard">
+<b>🔴 어려움</b>
+<small>힌트 감소 · 퍼즐 강화</small>
+</button>
+
+<button class="d" data-d="night">
+<b>💀 악몽</b>
+<small>랜덤 암호 · 함정 · 귀신</small>
+</button>
+</div>
+
+<button class="startBtn" onclick="start()">GAME START</button>
+</div>
+</div>
 
 <div id="hud">
-
- <div class="hud">
-  ❤️ <span id="hp">100</span>
-  <div class="bar">
-   <div id="hpFill" class="fill"></div>
-  </div>
- </div>
-
- <div class="hud">
-  ⭐ Lv.<span id="level">1</span>
-  · ⚔️ <span id="attack">10</span>
-  · 💰 <span id="coins">0</span>
-  <br>
-  🏆 <span id="score">0</span>
-  <div class="bar">
-   <div id="xpFill" class="fill"></div>
-  </div>
- </div>
-
+<div class="group">
+<div class="badge">🚪 <b id="room">ROOM 1 / 10</b></div>
+<div class="badge" id="roomName">폐쇄 연구실</div>
+<div class="badge">난이도 <b id="difficulty">쉬움</b></div>
 </div>
 
-<div id="tip">
- WASD 이동 · SHIFT 달리기 · 마우스 방향 공격
+<div class="group">
+<div class="badge">🎒 <b id="count">0</b></div>
+<div class="badge">⏱️ <b id="time">0:00</b></div>
+</div>
 </div>
 
-<!-- 무기 4칸 -->
+<div id="limit">⏳ 제한시간</div>
+<div id="world"></div>
+<div id="inventory"></div>
+<div id="msg"></div>
 
-<div id="slots"></div>
-
-<!-- 모바일 조작 -->
-
-<div id="mobile">
-
- <div id="joy">
-  <div id="knob"></div>
- </div>
-
- <button id="mfire">🔫</button>
-
- <button id="mjump">⬆️</button>
-
- <button id="mpoison">☠️ 독</button>
-
+<div id="warning">
+<div class="warning">
+⚠️ 위험 감지
+<small>발자국 소리가 가까워진다...</small>
+</div>
 </div>
 
-<div id="bossWarning">
- 👑 BOSS 등장!
+<div id="modal">
+<div class="card" id="card"></div>
 </div>
-
-<!-- 시작 -->
-
-<div id="start" class="overlay">
-
- <div class="panel">
-
-  <h1>⚔️ 민서 몬스터 슈터</h1>
-
-  <p>
-   몬스터를 잡고 레벨업하세요!
-  </p>
-
-  <p>
-   🎒 무기 최대 4개<br>
-   ☠️ 독 본능<br>
-   👑 보스<br>
-   🎁 보스 한정 무기
-  </p>
-
-  <button onclick="startGame()">
-   게임 시작
-  </button>
-
- </div>
-
-</div>
-
-<!-- 레벨업 -->
-
-<div id="levelPanel" class="overlay hidden">
-
- <div class="panel">
-
-  <h1>⭐ LEVEL UP!</h1>
-
-  <p>
-   레벨 <span id="newLevel"></span>
-  </p>
-
-  <div class="grid">
-
-   <div class="choice">
-
-    <h3>⚔️ 공격력</h3>
-
-    <p>
-     공격력 +5
-    </p>
-
-    <button onclick="levelSelect(1)">
-     선택
-    </button>
-
-   </div>
-
-   <div class="choice">
-
-    <h3>❤️ 체력</h3>
-
-    <p>
-     최대 체력 +25
-    </p>
-
-    <button onclick="levelSelect(2)">
-     선택
-    </button>
-
-   </div>
-
-   <div class="choice">
-
-    <h3>👟 속도</h3>
-
-    <p>
-     이동속도 +12%
-    </p>
-
-    <button onclick="levelSelect(3)">
-     선택
-    </button>
-
-   </div>
-
-  </div>
-
- </div>
-
-</div>
-
-<!-- 새 무기 -->
-
-<div id="weaponPanel" class="overlay hidden">
-
- <div class="panel">
-
-  <div class="rewardIcon">
-   🎁
-  </div>
-
-  <h2>새로운 무기!</h2>
-
-  <div id="weaponName" class="rewardName"></div>
-
-  <p id="weaponGrade"></p>
-
-  <div id="weaponInfo" class="rewardInfo"></div>
-
-  <button onclick="takeWeapon()">
-   장착하기
-  </button>
-
- </div>
-
-</div>
-
-<!-- 무기 교체 -->
-
-<div id="replacePanel" class="overlay hidden">
-
- <div class="panel">
-
-  <h1>🎒 무기 4칸이 가득 찼습니다!</h1>
-
-  <p>
-   버릴 무기를 눌러 새 무기를 장착하세요.
-  </p>
-
-  <div id="replaceGrid" class="grid"></div>
-
- </div>
-
-</div>
-
-<!-- 독 -->
-
-<div id="poisonPanel" class="overlay hidden">
-
- <div class="panel">
-
-  <h1>☠️ 독 본능</h1>
-
-  <p id="poisonWeapon"></p>
-
-  <div class="grid">
-
-   <div class="choice">
-
-    <h3>☠️ 독</h3>
-
-    <p>
-     5초 동안 지속 피해
-    </p>
-
-    <button onclick="poisonUpgrade(1)">
-     💰 120
-    </button>
-
-   </div>
-
-   <div class="choice">
-
-    <h3>🧪 강한 독</h3>
-
-    <p>
-     독 데미지 증가
-    </p>
-
-    <button onclick="poisonUpgrade(2)">
-     💰 220
-    </button>
-
-   </div>
-
-   <div class="choice">
-
-    <h3>☠️ 맹독</h3>
-
-    <p>
-     매우 강한 독
-    </p>
-
-    <button onclick="poisonUpgrade(3)">
-     💰 400
-    </button>
-
-   </div>
-
-  </div>
-
-  <br>
-
-  <button onclick="closePoison()">
-   닫기
-  </button>
-
- </div>
-
-</div>
-
-<!-- 보스 보상 -->
-
-<div id="bossPanel" class="overlay hidden">
-
- <div class="panel">
-
-  <h1>👑 보스 처치!</h1>
-
-  <div class="rewardIcon">
-   🎁
-  </div>
-
-  <div id="bossName" class="rewardName"></div>
-
-  <p>
-   ✨ 보스 한정 무기
-  </p>
-
-  <div id="bossInfo" class="rewardInfo"></div>
-
-  <button onclick="takeBossWeapon()">
-   획득
-  </button>
-
- </div>
 
 </div>
 
 <script>
-"use strict";
+const W=document.getElementById("world");
+const M=document.getElementById("modal");
+const C=document.getElementById("card");
+const MSG=document.getElementById("msg");
+const APP=document.getElementById("app");
 
-/* =========================
-   CANVAS
-========================= */
-
-const canvas=document.getElementById("game");
-const ctx=canvas.getContext("2d");
-
-let W=innerWidth;
-let H=innerHeight;
-
-function resize(){
-
- W=innerWidth;
- H=innerHeight;
-
- canvas.width=W;
- canvas.height=H;
-}
-
-resize();
-
-addEventListener("resize",resize);
-
-/* =========================
-   무기
-========================= */
-
-const weapons=[
-
- {
-  name:"🔫 권총",
-  damage:15,
-  cd:280,
-  count:1,
-  spread:.02,
-  speed:17,
-  color:"#ffe45c",
-  grade:"일반",
-  desc:"기본 무기"
- },
-
- {
-  name:"🔫 기관단총",
-  damage:8,
-  cd:100,
-  count:1,
-  spread:.13,
-  speed:19,
-  color:"#5ceaff",
-  grade:"일반",
-  desc:"빠른 연사"
- },
-
- {
-  name:"💥 샷건",
-  damage:11,
-  cd:600,
-  count:8,
-  spread:.55,
-  speed:14,
-  color:"#ff914d",
-  grade:"희귀",
-  desc:"8발 동시 발사"
- },
-
- {
-  name:"🎯 리볼버",
-  damage:40,
-  cd:450,
-  count:1,
-  spread:.01,
-  speed:22,
-  color:"#ffd06a",
-  grade:"희귀",
-  desc:"강력한 한 발"
- },
-
- {
-  name:"🔫 돌격소총",
-  damage:19,
-  cd:150,
-  count:1,
-  spread:.04,
-  speed:24,
-  color:"#72ff87",
-  grade:"희귀",
-  desc:"강력한 연사"
- },
-
- {
-  name:"🔥 미니건",
-  damage:7,
-  cd:55,
-  count:1,
-  spread:.13,
-  speed:23,
-  color:"#ff5555",
-  grade:"신화",
-  desc:"초고속 연사"
- },
-
- {
-  name:"⚡ 점사소총",
-  damage:17,
-  cd:280,
-  count:3,
-  spread:.08,
-  speed:24,
-  color:"#75a5ff",
-  grade:"신화",
-  desc:"3발 동시 발사"
- },
-
- {
-  name:"🔮 레이저",
-  damage:55,
-  cd:330,
-  count:1,
-  spread:0,
-  speed:30,
-  color:"#ff5cff",
-  grade:"신화",
-  desc:"빠른 레이저"
- },
-
- {
-  name:"🚀 로켓런처",
-  damage:105,
-  cd:900,
-  count:1,
-  spread:.01,
-  speed:10,
-  color:"#ff7733",
-  grade:"전설",
-  desc:"강력한 폭발"
- },
-
- {
-  name:"💠 플라즈마건",
-  damage:70,
-  cd:500,
-  count:2,
-  spread:.1,
-  speed:21,
-  color:"#70ff66",
-  grade:"전설",
-  desc:"강력한 플라즈마"
- },
-
- {
-  name:"💠 레일건",
-  damage:180,
-  cd:1100,
-  count:1,
-  spread:0,
-  speed:36,
-  color:"#72ffff",
-  grade:"전설",
-  desc:"초강력 탄환"
- },
-
- {
-  name:"🎯 저격총",
-  damage:350,
-  cd:1700,
-  count:1,
-  spread:.003,
-  speed:42,
-  color:"#fff",
-  grade:"전설",
-  desc:"극강의 한 발"
- },
-
- {
-  name:"🔥 화염방사기",
-  damage:13,
-  cd:70,
-  count:1,
-  spread:.27,
-  speed:10,
-  color:"#ff722f",
-  grade:"신화",
-  desc:"화염 공격"
- }
-
+const names=[
+"폐쇄 연구실",
+"낡은 창고",
+"기록 보관실",
+"실험실",
+"지하 복도",
+"전기실",
+"거울의 방",
+"보안실",
+"뒤틀린 연구소",
+"최종 출구"
 ];
 
-const limited=[
+const ICON={
+key:"🗝️",
+key2:"🗝️",
+flash:"🔦",
+fuse:"⚡",
+cable:"🔌",
+card:"💳",
+star:"⭐",
+final:"🗝️",
+battery:"🔋"
+};
 
- {
-  name:"🌌 블랙홀 캐논",
-  damage:500,
-  cd:900,
-  count:1,
-  spread:.02,
-  speed:13,
-  color:"#bd5cff",
-  grade:"한정",
-  desc:"적을 끌어당김"
- },
+let difficulty="easy";
+let room=1;
+let inv=[];
+let flags={};
+let started=false;
+let startTime=0;
+let timer=null;
+let limitTimer=null;
+let usedWarning=false;
+let currentCode=null;
+let fakeUsed=false;
 
- {
-  name:"⚡ 신의 번개",
-  damage:230,
-  cd:500,
-  count:1,
-  spread:0,
-  speed:25,
-  color:"#fff",
-  grade:"한정",
-  desc:"주변 적에게 번개"
- },
+document.querySelectorAll(".d").forEach(btn=>{
+btn.onclick=()=>{
+document.querySelectorAll(".d").forEach(x=>x.classList.remove("sel"));
+btn.classList.add("sel");
+difficulty=btn.dataset.d;
+};
+});
 
- {
-  name:"🔥 지옥 기관총",
-  damage:28,
-  cd:55,
-  count:2,
-  spread:.12,
-  speed:23,
-  color:"#ff3824",
-  grade:"한정",
-  desc:"강력한 화염 연사"
- },
-
- {
-  name:"❄️ 아이스 블래스터",
-  damage:95,
-  cd:650,
-  count:3,
-  spread:.3,
-  speed:18,
-  color:"#72eaff",
-  grade:"한정",
-  desc:"적을 느리게 함"
- },
-
- {
-  name:"💎 크리스탈 레일건",
-  damage:600,
-  cd:1800,
-  count:1,
-  spread:0,
-  speed:42,
-  color:"#7fffff",
-  grade:"한정",
-  desc:"초강력 관통"
- }
-
-];
-
-/* =========================
-   상태
-========================= */
-
-let player;
-let enemies=[];
-let bullets=[];
-let particles=[];
-
-let slots=[];
-
-let level=1;
-let xp=0;
-let nextXP=30;
-
-let coins=0;
-let score=0;
-
-let running=false;
-let raf=false;
-
-let spawnTimer=0;
-let bossTimer=0;
-let bossAlive=false;
-
-let pendingWeapon=null;
-let bossReward=null;
-
-let keys={};
-
-let mouseX=W/2;
-let mouseY=H/2;
-let mouseDown=false;
-
-let joyX=0;
-let joyY=0;
-
-/* =========================
-   시작
-========================= */
-
-function startGame(){
-
- document.getElementById("start")
- .classList.add("hidden");
-
- level=1;
- xp=0;
- nextXP=30;
- coins=0;
- score=0;
-
- enemies=[];
- bullets=[];
- particles=[];
-
- slots=[
-  {base:0,lv:1,poison:0,poisonLevel:0},
-  null,
-  null,
-  null
- ];
-
- player={
-  x:2500,
-  y:2500,
-  hp:100,
-  maxHp:100,
-  attack:10,
-  speed:4.2,
-  active:0,
-  cooldown:0,
-  inv:0,
-  z:0,
-  jumping:false,
-  jumpV:0
- };
-
- spawnTimer=0;
- bossTimer=0;
- bossAlive=false;
-
- renderSlots();
-
- running=true;
-
- startLoop();
+function level(){
+if(difficulty==="easy")return 0;
+if(difficulty==="normal")return 1;
+if(difficulty==="hard")return 2;
+return 3;
 }
 
-/* =========================
-   LOOP
-========================= */
-
-function startLoop(){
-
- if(raf)return;
-
- raf=true;
-
- requestAnimationFrame(loop);
+function difficultyName(){
+return{
+easy:"쉬움",
+normal:"보통",
+hard:"어려움",
+night:"악몽"
+}[difficulty];
 }
 
-function loop(){
+function start(){
 
- if(!running){
+started=true;
 
-  raf=false;
-  return;
- }
+document.getElementById("start").style.display="none";
+document.getElementById("difficulty").textContent=difficultyName();
 
- update();
- draw();
- hud();
+startTime=Date.now();
 
- if(player.hp<=0){
+clearInterval(timer);
 
-  gameOver();
-  return;
- }
+timer=setInterval(()=>{
+document.getElementById("time").textContent=
+formatTime((Date.now()-startTime)/1000);
+},500);
 
- requestAnimationFrame(loop);
+if(difficulty==="night"){
+document.getElementById("limit").style.display="block";
+startNightLimit();
 }
 
-/* =========================
-   무기 함수
-========================= */
-
-function getWeapon(s){
-
- if(s.base<weapons.length)
-  return weapons[s.base];
-
- return limited[s.base-weapons.length];
+loadRoom(1);
 }
 
-function damage(s){
+function startNightLimit(){
 
- const w=getWeapon(s);
+clearTimeout(limitTimer);
 
- return Math.floor(
-  w.damage+
-  w.damage*.22*(s.lv-1)+
-  player.attack
- );
+limitTimer=setTimeout(()=>{
+if(started){
+say("💀 시간이 끝났다...");
+gameOver();
 }
-
-function cooldown(s){
-
- const w=getWeapon(s);
-
- return Math.max(
-  35,
-  w.cd-(s.lv-1)*10
- );
+},15*60*1000);
 }
-
-/* =========================
-   무기 슬롯
-========================= */
-
-function renderSlots(){
-
- const box=document.getElementById("slots");
-
- box.innerHTML="";
-
- for(let i=0;i<4;i++){
-
-  const s=slots[i];
-  const div=document.createElement("div");
-
-  div.className=
-   "slot "+
-   (player&&player.active===i?"active":"");
-
-  if(s){
-
-   const w=getWeapon(s);
-
-   div.innerHTML=
-    `<b>${i+1}. ${w.name}</b>
-     <small>Lv.${s.lv} · ⚔️${damage(s)}</small>
-     <small>${
-      s.poison
-       ?"☠️ 독 Lv."+s.poisonLevel
-       :"☠️ 독 없음"
-     }</small>`;
-
-  }else{
-
-   div.innerHTML=
-    `<b>${i+1}. 빈 슬롯</b>
-     <small>새 무기</small>`;
-  }
-
-  /*
-   ★ 핵심
-   모바일에서는 아래 칸 자체를
-   눌러 무기를 교체한다.
-  */
-
-  div.addEventListener(
-   "pointerdown",
-   function(e){
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    if(s){
-
-     player.active=i;
-
-     renderSlots();
-
-     message(
-      "🔄 "+
-      getWeapon(s).name+
-      " 장착!"
-     );
-    }
-   },
-   {passive:false}
-  );
-
-  box.appendChild(div);
- }
-}
-
-/* =========================
-   발사
-========================= */
-
-function fire(){
-
- if(!running||!player)
-  return;
-
- const s=slots[player.active];
-
- if(!s||player.cooldown>0)
-  return;
-
- const w=getWeapon(s);
-
- const angle=Math.atan2(
-  mouseY-H/2,
-  mouseX-W/2
- );
-
- player.cooldown=cooldown(s);
-
- for(let i=0;i<w.count;i++){
-
-  const a=
-   angle+
-   (Math.random()-.5)*w.spread;
-
-  bullets.push({
-
-   x:player.x,
-   y:player.y,
-
-   vx:Math.cos(a)*w.speed,
-   vy:Math.sin(a)*w.speed,
-
-   damage:damage(s),
-
-   life:130,
-
-   color:w.color,
-
-   source:s
-  });
- }
-}
-
-/* =========================
-   이동 / 점프
-========================= */
-
-function jump(){
-
- if(
-  running&&
-  player.z===0&&
-  !player.jumping
- ){
-
-  player.jumping=true;
-  player.jumpV=14;
- }
-}
-
-/* =========================
-   레벨
-========================= */
-
-function gainXP(amount){
-
- xp+=amount;
-
- if(xp>=nextXP){
-
-  xp-=nextXP;
-
-  level++;
-
-  nextXP=Math.floor(nextXP*1.3);
-
-  running=false;
-
-  document.getElementById("newLevel")
-   .textContent=level;
-
-  document.getElementById("levelPanel")
-   .classList.remove("hidden");
- }
-}
-
-function levelSelect(type){
-
- if(type===1)
-  player.attack+=5;
-
- if(type===2){
-
-  player.maxHp+=25;
-  player.hp=player.maxHp;
- }
-
- if(type===3)
-  player.speed*=1.12;
-
- document.getElementById("levelPanel")
- .classList.add("hidden");
-
- /*
-  레벨업 후 새 무기 발견
- */
-
- if(Math.random()<.65){
-
-  const possible=[];
-
-  for(let i=1;i<weapons.length;i++){
-
-   if(
-    !slots.some(
-     s=>s&&s.base===i
-    )
-   ){
-    possible.push(i);
-   }
-  }
-
-  if(possible.length){
-
-   const id=
-    possible[
-     Math.floor(
-      Math.random()*possible.length
-     )
-    ];
-
-   pendingWeapon={
-    base:id,
-    lv:1,
-    poison:0,
-    poisonLevel:0
-   };
-
-   showWeapon();
-
-   return;
-  }
- }
-
- running=true;
- startLoop();
-}
-
-/* =========================
-   무기 보상
-========================= */
-
-function showWeapon(){
-
- const w=getWeapon(pendingWeapon);
-
- document.getElementById("weaponName")
- .textContent=w.name;
-
- document.getElementById("weaponGrade")
- .textContent="⭐ "+w.grade;
-
- document.getElementById("weaponInfo")
- .innerHTML=
-  "⚔️ 공격력: "+damage(pendingWeapon)+
-  "<br>🎯 탄환: "+w.count+
-  "<br>✨ "+w.desc;
-
- document.getElementById("weaponPanel")
- .classList.remove("hidden");
-}
-
-function takeWeapon(){
-
- document.getElementById("weaponPanel")
- .classList.add("hidden");
-
- addWeapon(pendingWeapon);
-}
-
-function addWeapon(s){
-
- const empty=slots.findIndex(v=>!v);
-
- if(empty>=0){
-
-  slots[empty]=s;
-  player.active=empty;
-
-  pendingWeapon=null;
-
-  renderSlots();
-
-  running=true;
-  startLoop();
-
-  return;
- }
-
- showReplace(s);
-}
-
-function showReplace(s){
-
- pendingWeapon=s;
-
- const grid=
-  document.getElementById("replaceGrid");
-
- grid.innerHTML="";
-
- for(let i=0;i<4;i++){
-
-  const old=slots[i];
-  const w=getWeapon(old);
-
-  const div=document.createElement("div");
-
-  div.className="choice";
-
-  div.innerHTML=
-   `<h3>${w.name}</h3>
-    <p>
-     Lv.${old.lv}<br>
-     ⚔️ ${damage(old)}<br>
-     ${old.poison?"☠️ 독":"독 없음"}
-    </p>
-    <button>이 무기 버리기</button>`;
-
-  div.querySelector("button")
-   .onclick=()=>{
-
-    slots[i]=pendingWeapon;
-    player.active=i;
-
-    pendingWeapon=null;
-
-    document.getElementById("replacePanel")
-     .classList.add("hidden");
-
-    renderSlots();
-
-    running=true;
-    startLoop();
-
-    message("🔄 무기 교체 완료!");
-   };
-
-  grid.appendChild(div);
- }
-
- running=false;
-
- document.getElementById("replacePanel")
- .classList.remove("hidden");
-}
-
-/* =========================
-   독
-========================= */
-
-function openPoison(){
-
- if(!player)
-  return;
-
- const s=slots[player.active];
-
- if(!s){
-
-  message("❌ 먼저 무기를 선택하세요!");
-  return;
- }
-
- document.getElementById("poisonWeapon")
- .textContent=
-  getWeapon(s).name+
-  " · 현재 독 Lv."+
-  (s.poisonLevel||0);
-
- document.getElementById("poisonPanel")
- .classList.remove("hidden");
-}
-
-function closePoison(){
-
- document.getElementById("poisonPanel")
- .classList.add("hidden");
-}
-
-function poisonUpgrade(type){
-
- const costs=[
-  0,
-  120,
-  220,
-  400
- ];
-
- if(coins<costs[type]){
-
-  message("💰 코인이 부족합니다!");
-  return;
- }
-
- const s=slots[player.active];
-
- if(!s)return;
-
- coins-=costs[type];
-
- s.poison=1;
- s.poisonLevel=Math.max(
-  s.poisonLevel||0,
-  type
- );
-
- renderSlots();
-
- closePoison();
-
- message(
-  "☠️ 독 Lv."+
-  s.poisonLevel+
-  " 강화!"
- );
-}
-
-/* =========================
-   적 생성
-========================= */
-
-function spawnEnemy(boss=false){
-
- const a=Math.random()*Math.PI*2;
- const dist=800+Math.random()*700;
-
- const hp=
-  boss
-   ?1000+level*220
-   :35+level*23;
-
- enemies.push({
-
-  x:Math.max(
-   50,
-   Math.min(
-    4950,
-    player.x+Math.cos(a)*dist
-   )
-  ),
-
-  y:Math.max(
-   50,
-   Math.min(
-    4950,
-    player.y+Math.sin(a)*dist
-   )
-  ),
-
-  size:boss?110:35+Math.min(level*1.5,25),
-
-  hp:hp,
-  maxHp:hp,
-
-  speed:
-   boss
-    ?.65+level*.01
-    :1+Math.random()+level*.035,
-
-  damage:
-   boss
-    ?20+level
-    :5+level,
-
-  boss:boss,
-
-  poison:0,
-  poisonDamage:0,
-  slow:0
- });
-}
-
-function spawnCount(){
-
- if(level<=2)return 1;
- if(level<=4)return 2;
- if(level<=7)return 3;
- if(level<=10)return 4;
- if(level<=15)return 6;
-
- return Math.min(
-  13,
-  6+Math.floor(level/3)
- );
-}
-
-function spawnDelay(){
-
- if(level<=2)return 1500;
- if(level<=4)return 1100;
- if(level<=7)return 850;
- if(level<=10)return 650;
-
- return Math.max(
-  280,
-  650-level*13
- );
-}
-
-/* =========================
-   보스
-========================= */
-
-function spawnBoss(){
-
- bossAlive=true;
-
- spawnEnemy(true);
-
- const b=
-  document.getElementById("bossWarning");
-
- b.classList.add("show");
-
- setTimeout(()=>{
-  b.classList.remove("show");
- },2200);
-}
-
-function bossDrop(){
-
- const r=Math.random()*100;
-
- let id=-1;
-
- if(r<5)id=0;
- else if(r<13)id=1;
- else if(r<25)id=2;
- else if(r<40)id=3;
- else if(r<50)id=4;
-
- if(id<0){
-
-  message(
-   "👑 보스가 한정 무기를 드롭하지 않았습니다!"
-  );
-
-  running=true;
-  startLoop();
-
-  return;
- }
-
- bossReward={
-  base:weapons.length+id,
-  lv:1,
-  poison:0,
-  poisonLevel:0
- };
-
- const w=getWeapon(bossReward);
-
- document.getElementById("bossName")
- .textContent=w.name;
-
- document.getElementById("bossInfo")
- .innerHTML=
-  "⚔️ 공격력: "+w.damage+
-  "<br>✨ "+w.desc+
-  "<br>🎲 보스 한정 무기";
-
- document.getElementById("bossPanel")
- .classList.remove("hidden");
-
- running=false;
-}
-
-function takeBossWeapon(){
-
- document.getElementById("bossPanel")
- .classList.add("hidden");
-
- pendingWeapon=bossReward;
-
- bossReward=null;
-
- addWeapon(pendingWeapon);
-}
-
-/* =========================
-   UPDATE
-========================= */
-
-function update(){
-
- let dx=0;
- let dy=0;
-
- if(keys.w||keys.arrowup)dy--;
- if(keys.s||keys.arrowdown)dy++;
- if(keys.a||keys.arrowleft)dx--;
- if(keys.d||keys.arrowright)dx++;
-
- dx+=joyX;
- dy+=joyY;
-
- if(dx||dy){
-
-  const len=Math.hypot(dx,dy);
-
-  const speed=
-   player.speed*
-   (keys.shift?1.7:1);
-
-  player.x+=dx/len*speed;
-  player.y+=dy/len*speed;
- }
-
- player.x=Math.max(
-  30,
-  Math.min(4970,player.x)
- );
-
- player.y=Math.max(
-  30,
-  Math.min(4970,player.y)
- );
-
- /* 점프 */
-
- if(player.jumping){
-
-  player.jumpV-=.7;
-  player.z+=player.jumpV;
-
-  if(player.z<=0){
-
-   player.z=0;
-   player.jumping=false;
-  }
- }
-
- player.cooldown=
-  Math.max(
-   0,
-   player.cooldown-16
-  );
-
- player.inv=
-  Math.max(
-   0,
-   player.inv-16
-  );
-
- if(mouseDown)
-  fire();
-
- /* 적 생성 */
-
- spawnTimer-=16;
-
- if(spawnTimer<=0){
-
-  for(
-   let i=0;
-   i<spawnCount();
-   i++
-  ){
-   spawnEnemy();
-  }
-
-  spawnTimer=spawnDelay();
- }
-
- /* 보스 45초 */
-
- bossTimer+=16;
-
- if(
-  bossTimer>=45000&&
-  !bossAlive
- ){
-
-  bossTimer=0;
-  spawnBoss();
- }
-
- /* 총알 */
-
- for(const b of bullets){
-
-  b.x+=b.vx;
-  b.y+=b.vy;
-  b.life--;
-
-  for(const e of enemies){
-
-   if(
-    Math.hypot(
-     b.x-e.x,
-     b.y-e.y
-    )<
-    e.size/2+8
-   ){
-
-    e.hp-=b.damage;
-
-    b.life=0;
-
-    const source=b.source;
-    const w=getWeapon(source);
-
-    /* 독 */
-
-    if(source.poison){
-
-     const lv=
-      source.poisonLevel||1;
-
-     e.poison=5000;
-
-     e.poisonDamage=
-      lv*
-      (3+b.damage*.025);
-
-     particle(
-      e.x,
-      e.y,
-      5,
-      "#55ff55"
-     );
-    }
-
-    /* 블랙홀 */
-
-    if(w.name.includes("블랙홀")){
-
-     e.x+=(player.x-e.x)*.09;
-     e.y+=(player.y-e.y)*.09;
-    }
-
-    /* 아이스 */
-
-    if(w.name.includes("아이스"))
-     e.slow=3500;
-
-    /* 번개 */
-
-    if(w.name.includes("번개")){
-
-     for(const o of enemies){
-
-      if(
-       o!==e&&
-       Math.hypot(
-        o.x-e.x,
-        o.y-e.y
-       )<190
-      ){
-
-       o.hp-=b.damage*.35;
-
-       particle(
-        o.x,
-        o.y,
-        5,
-        "#fff"
-       );
-      }
-     }
-    }
-
-    particle(
-     b.x,
-     b.y,
-     6,
-     b.color
-    );
-
-    break;
-   }
-  }
- }
-
- bullets=
-  bullets.filter(
-   b=>b.life>0
-  );
-
- /* 적 */
-
- for(const e of enemies){
-
-  if(e.poison>0){
-
-   e.poison-=16;
-
-   e.hp-=
-    e.poisonDamage/60;
-  }
-
-  if(e.slow>0)
-   e.slow-=16;
-
-  const dx=
-   player.x-e.x;
-
-  const dy=
-   player.y-e.y;
-
-  const dist=
-   Math.hypot(dx,dy)||1;
-
-  const sp=
-   e.speed*
-   (e.slow>0?.42:1);
-
-  e.x+=dx/dist*sp;
-  e.y+=dy/dist*sp;
-
-  if(
-   Math.hypot(
-    player.x-e.x,
-    player.y-e.y
-   )<
-   42+e.size/2&&
-   player.inv<=0&&
-   !player.jumping
-  ){
-
-   player.hp-=e.damage;
-
-   player.inv=800;
-
-   particle(
-    player.x,
-    player.y,
-    15,
-    "#ff4164"
-   );
-  }
- }
-
- /* 죽은 적 */
-
- enemies=
-  enemies.filter(e=>{
-
-   if(e.hp<=0){
-
-    score+=e.boss?300:10;
-
-    coins+=
-     e.boss
-      ?100
-      :4+Math.floor(
-       Math.random()*8
-      );
-
-    gainXP(
-     e.boss
-      ?150
-      :12
-    );
-
-    particle(
-     e.x,
-     e.y,
-     e.boss?60:18,
-     e.boss?"#ff4d91":"#ffd43b"
-    );
-
-    if(e.boss){
-
-     bossAlive=false;
-
-     setTimeout(
-      bossDrop,
-      300
-     );
-    }
-
-    return false;
-   }
-
-   return true;
-  });
-
- /* 파티클 */
-
- for(const p of particles){
-
-  p.x+=p.vx;
-  p.y+=p.vy;
-  p.vy+=.1;
-  p.life--;
- }
-
- particles=
-  particles.filter(
-   p=>p.life>0
-  );
-}
-
-/* =========================
-   DRAW
-========================= */
-
-function camera(){
-
- return{
-
-  x:Math.max(
-   0,
-   Math.min(
-    5000-W,
-    player.x-W/2
-   )
-  ),
-
-  y:Math.max(
-   0,
-   Math.min(
-    5000-H,
-    player.y-H/2
-   )
-  )
- };
-}
-
-function draw(){
-
- const cam=camera();
-
- ctx.clearRect(0,0,W,H);
-
- ctx.save();
-
- ctx.translate(
-  -cam.x,
-  -cam.y
- );
-
- /* 맵 */
-
- ctx.fillStyle="#09132d";
-
- ctx.fillRect(
-  0,0,5000,5000
- );
-
- ctx.strokeStyle="#14254a";
-
- for(let i=0;i<=5000;i+=100){
-
-  ctx.beginPath();
-  ctx.moveTo(i,0);
-  ctx.lineTo(i,5000);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(0,i);
-  ctx.lineTo(5000,i);
-  ctx.stroke();
- }
-
- ctx.strokeStyle="#536fe0";
- ctx.lineWidth=8;
-
- ctx.strokeRect(
-  20,20,4960,4960
- );
-
- ctx.lineWidth=1;
-
- /* 적 */
-
- for(const e of enemies){
-
-  ctx.fillStyle=
-   e.boss
-    ?"#bd2d76"
-    :"#b93d57";
-
-  ctx.shadowBlur=
-   e.boss?28:8;
-
-  ctx.shadowColor=
-   ctx.fillStyle;
-
-  ctx.beginPath();
-
-  ctx.arc(
-   e.x,
-   e.y,
-   e.size/2,
-   0,
-   Math.PI*2
-  );
-
-  ctx.fill();
-
-  ctx.shadowBlur=0;
-
-  if(e.poison>0){
-
-   ctx.strokeStyle="#55ff55";
-   ctx.lineWidth=5;
-
-   ctx.beginPath();
-
-   ctx.arc(
-    e.x,
-    e.y,
-    e.size/2+6,
-    0,
-    Math.PI*2
-   );
-
-   ctx.stroke();
-
-   ctx.lineWidth=1;
-  }
-
-  /* HP */
-
-  ctx.fillStyle="#292938";
-
-  ctx.fillRect(
-   e.x-e.size/2,
-   e.y-e.size/2-12,
-   e.size,
-   7
-  );
-
-  ctx.fillStyle=
-   e.poison>0
-    ?"#55ff55"
-    :"#ff4d6d";
-
-  ctx.fillRect(
-   e.x-e.size/2,
-   e.y-e.size/2-12,
-   e.size*
-   Math.max(
-    0,
-    e.hp/e.maxHp
-   ),
-   7
-  );
-
-  if(e.boss){
-
-   ctx.fillStyle="#ffe45b";
-   ctx.font="bold 20px Arial";
-   ctx.textAlign="center";
-
-   ctx.fillText(
-    "👑 BOSS",
-    e.x,
-    e.y-e.size/2-22
-   );
-  }
- }
-
- /* 총알 */
-
- for(const b of bullets){
-
-  ctx.fillStyle=b.color;
-
-  ctx.shadowBlur=15;
-  ctx.shadowColor=b.color;
-
-  ctx.beginPath();
-
-  ctx.arc(
-   b.x,
-   b.y,
-   5,
-   0,
-   Math.PI*2
-  );
-
-  ctx.fill();
-
-  ctx.shadowBlur=0;
- }
-
- /* 파티클 */
-
- for(const p of particles){
-
-  ctx.globalAlpha=
-   Math.max(
-    0,
-    p.life/40
-   );
-
-  ctx.fillStyle=p.color;
-
-  ctx.fillRect(
-   p.x,
-   p.y,
-   5,
-   5
-  );
- }
-
- ctx.globalAlpha=1;
-
- /* 플레이어 */
-
- const py=
-  player.y-player.z;
-
- if(
-  player.inv<=0||
-  Math.floor(player.inv/100)%2===0
- ){
-
-  ctx.fillStyle="#62eaff";
-
-  ctx.shadowBlur=20;
-  ctx.shadowColor="#62eaff";
-
-  ctx.fillRect(
-   player.x-21,
-   py-21,
-   42,
-   42
-  );
-
-  ctx.shadowBlur=0;
-
-  const s=slots[player.active];
-
-  if(s){
-
-   const angle=Math.atan2(
-    mouseY-H/2,
-    mouseX-W/2
-   );
-
-   ctx.save();
-
-   ctx.translate(
-    player.x,
-    py
-   );
-
-   ctx.rotate(angle);
-
-   ctx.fillStyle=
-    getWeapon(s).color;
-
-   ctx.fillRect(
-    3,-5,42,10
-   );
-
-   ctx.restore();
-  }
- }
-
- ctx.restore();
-}
-
-/* =========================
-   HUD
-========================= */
-
-function hud(){
-
- if(!player)return;
-
- document.getElementById("hp")
- .textContent=Math.max(
-  0,
-  Math.ceil(player.hp)
- );
-
- document.getElementById("level")
- .textContent=level;
-
- document.getElementById("attack")
- .textContent=player.attack;
-
- document.getElementById("coins")
- .textContent=coins;
-
- document.getElementById("score")
- .textContent=score;
-
- document.getElementById("hpFill")
- .style.width=
-  Math.max(
-   0,
-   player.hp/player.maxHp*100
-  )+"%";
-
- document.getElementById("xpFill")
- .style.width=
-  Math.min(
-   100,
-   xp/nextXP*100
-  )+"%";
-}
-
-/* =========================
-   GAME OVER
-========================= */
 
 function gameOver(){
 
- running=false;
- raf=false;
+started=false;
+clearInterval(timer);
 
- document.querySelector(
-  "#start h1"
- ).textContent="💀 GAME OVER";
+M.style.display="flex";
 
- document.querySelector(
-  "#start p"
- ).innerHTML=
-  "점수 "+score+
-  " · 레벨 "+level+
-  " · 코인 "+coins+
-  "<br><br>다시 도전하세요!";
-
- document.getElementById("start")
- .classList.remove("hidden");
+C.innerHTML=`
+<h2>💀 탈출 실패</h2>
+<p>
+시간이 다 되어 버렸습니다.<br>
+악몽 난이도에서는 실수할 시간이 없습니다.
+</p>
+<button class="ok" onclick="location.reload()">다시 도전</button>
+`;
 }
 
-/* =========================
-   키보드
-========================= */
+function formatTime(sec){
 
-addEventListener(
- "keydown",
- e=>{
+sec=Math.floor(sec);
 
-  keys[e.key.toLowerCase()]=true;
+let m=Math.floor(sec/60);
+let s=String(sec%60).padStart(2,"0");
 
-  if(e.key===" ")
-   jump();
-
-  if(e.key.toLowerCase()==="f")
-   fire();
-
-  if("1234".includes(e.key))
-   selectWeapon(
-    Number(e.key)-1
-   );
-
-  if(e.key.toLowerCase()==="i")
-   openPoison();
- });
-
-addEventListener(
- "keyup",
- e=>{
-  keys[e.key.toLowerCase()]=false;
- });
-
-function selectWeapon(i){
-
- if(!slots[i])return;
-
- player.active=i;
-
- renderSlots();
-
- message(
-  "🔄 "+
-  getWeapon(slots[i]).name+
-  " 장착!"
- );
+return m+":"+s;
 }
 
-/* =========================
-   마우스
-========================= */
+function say(text){
 
-canvas.addEventListener(
- "mousemove",
- e=>{
+MSG.textContent=text;
+MSG.style.opacity="1";
 
-  mouseX=e.clientX;
-  mouseY=e.clientY;
- });
+clearTimeout(say.timer);
 
-canvas.addEventListener(
- "mousedown",
- e=>{
-
-  mouseX=e.clientX;
-  mouseY=e.clientY;
-
-  mouseDown=true;
-
-  fire();
- });
-
-addEventListener(
- "mouseup",
- ()=>{
-  mouseDown=false;
- });
-
-/* =========================
-   모바일 조이스틱
-========================= */
-
-const joy=
- document.getElementById("joy");
-
-const knob=
- document.getElementById("knob");
-
-let joyID=null;
-
-joy.addEventListener(
- "pointerdown",
- e=>{
-
-  e.preventDefault();
-
-  joyID=e.pointerId;
-
-  joy.setPointerCapture(e.pointerId);
-
-  moveJoy(e);
- },
- {passive:false}
-);
-
-joy.addEventListener(
- "pointermove",
- e=>{
-
-  if(e.pointerId===joyID)
-   moveJoy(e);
- },
- {passive:false}
-);
-
-joy.addEventListener(
- "pointerup",
- resetJoy,
- {passive:false}
-);
-
-joy.addEventListener(
- "pointercancel",
- resetJoy,
- {passive:false}
-);
-
-function moveJoy(e){
-
- const r=joy.getBoundingClientRect();
-
- const cx=r.left+r.width/2;
- const cy=r.top+r.height/2;
-
- let x=e.clientX-cx;
- let y=e.clientY-cy;
-
- const max=r.width*.38;
-
- const len=Math.hypot(x,y);
-
- if(len>max){
-
-  x=x/len*max;
-  y=y/len*max;
- }
-
- joyX=x/max;
- joyY=y/max;
-
- knob.style.transform=
-  `translate(${x}px,${y}px)`;
+say.timer=setTimeout(()=>{
+MSG.style.opacity="0";
+},2600);
 }
 
-function resetJoy(){
-
- joyX=0;
- joyY=0;
-
- knob.style.transform=
-  "translate(0,0)";
+function has(id){
+return inv.includes(id);
 }
 
-/* =========================
-   모바일 공격
-========================= */
+function getItem(id){
 
-const mfire=
- document.getElementById("mfire");
-
-mfire.addEventListener(
- "pointerdown",
- e=>{
-
-  e.preventDefault();
-  e.stopPropagation();
-
-  mouseDown=true;
-
-  fire();
- },
- {passive:false}
-);
-
-mfire.addEventListener(
- "pointerup",
- e=>{
-
-  e.preventDefault();
-
-  mouseDown=false;
- },
- {passive:false}
-);
-
-mfire.addEventListener(
- "pointercancel",
- ()=>{
-  mouseDown=false;
- }
-);
-
-/* =========================
-   모바일 점프
-========================= */
-
-document.getElementById("mjump")
- .addEventListener(
-  "pointerdown",
-  e=>{
-
-   e.preventDefault();
-   e.stopPropagation();
-
-   jump();
-  },
-  {passive:false}
- );
-
-/* =========================
-   ★ 모바일 독 버튼
-========================= */
-
-document.getElementById("mpoison")
- .addEventListener(
-  "pointerdown",
-  e=>{
-
-   e.preventDefault();
-   e.stopPropagation();
-
-   openPoison();
-  },
-  {passive:false}
- );
-
-/* =========================
-   모바일 화면 터치로
-   공격 방향 설정
-========================= */
-
-canvas.addEventListener(
- "pointerdown",
- e=>{
-
-  if(e.pointerType==="touch"){
-
-   mouseX=e.clientX;
-   mouseY=e.clientY;
-  }
- },
- {passive:false}
-);
-
-/* =========================
-   메시지
-========================= */
-
-function message(text){
-
- const t=
-  document.getElementById("tip");
-
- const old=t.textContent;
-
- t.textContent=text;
-
- setTimeout(()=>{
-
-  if(t.textContent===text)
-   t.textContent=old;
-
- },1300);
+if(has(id)){
+say("이미 가지고 있다.");
+return;
 }
 
-/* =========================
-   파티클
-========================= */
+inv.push(id);
 
-function particle(x,y,n,color){
+document.getElementById("count").textContent=inv.length;
 
- for(let i=0;i<n;i++){
+renderInventory();
 
-  particles.push({
-
-   x:x,
-   y:y,
-
-   vx:(Math.random()-.5)*8,
-   vy:(Math.random()-.5)*8,
-
-   life:25+Math.random()*35,
-
-   color:color
-  });
- }
+say("획득: "+ICON[id]);
 }
 
-/* =========================
-   저장
-========================= */
+function renderInventory(){
 
-setInterval(()=>{
+document.getElementById("inventory").innerHTML=
+inv.map(id=>`
+<div class="slot">${ICON[id]}</div>
+`).join("");
+}
 
- if(!player)return;
+function clearWorld(){
+W.innerHTML="";
+}
 
- try{
+function base(){
 
-  localStorage.setItem(
-   "minseoShooter",
-   JSON.stringify({
+let f=document.createElement("div");
 
-    level:level,
-    xp:xp,
-    nextXP:nextXP,
-    coins:coins,
-    score:score,
+f.className="floor";
 
-    slots:slots,
+W.appendChild(f);
 
-    attack:player.attack,
-    maxHp:player.maxHp,
-    speed:player.speed
+wall(0,7,7,85);
+wall(93,7,7,85);
+wall(0,7,100,7);
+wall(0,85,100,7);
+}
 
-   })
-  );
+function wall(x,y,w,h){
 
- }catch(e){}
+let e=document.createElement("div");
 
-},5000);
+e.className="wall";
+
+e.style.left=x+"%";
+e.style.top=y+"%";
+e.style.width=w+"%";
+e.style.height=h+"%";
+
+W.appendChild(e);
+}
+
+function object(cls,x,y,w,h,html,fn){
+
+let e=document.createElement("div");
+
+e.className="obj "+cls;
+
+e.style.left=x+"%";
+e.style.top=y+"%";
+e.style.width=w+"%";
+e.style.height=h+"%";
+
+e.innerHTML=html;
+
+e.onclick=fn;
+
+W.appendChild(e);
+
+return e;
+}
+
+function door(x,y,fn,fake=false){
+
+let e=object(
+"door"+(fake?" fake":""),
+x,y,11,20,
+`
+<span>${fake?"FAKE":"EXIT"}</span>
+<strong>${fake?"⚠️":"🔒"}</strong>
+<span>${fake?"가짜 출구":"탈출구"}</span>
+`,
+fn
+);
+
+return e;
+}
+
+function panel(x,y,fn,label="암호 장치"){
+
+return object(
+"panel",
+x,y,14,13,
+`
+<b>---</b>
+<small>${label}</small>
+`,
+fn
+);
+}
+
+function note(x,y,text,fn){
+
+return object(
+"note",
+x,y,16,14,
+text,
+fn
+);
+}
+
+function itemObject(x,y,icon,name,fn){
+
+return object(
+"item",
+x,y,8,12,
+`${icon}<small>${name}</small>`,
+fn
+);
+}
+
+/* 암호 */
+
+function randomCode(){
+
+return String(
+Math.floor(1000+Math.random()*9000)
+);
+}
+
+function openCode(correct){
+
+currentCode=String(correct);
+
+M.style.display="flex";
+
+C.innerHTML=`
+<h2>🔢 암호 장치</h2>
+
+<p>
+주변 단서를 확인하고 암호를 입력하세요.
+${difficulty==="night"?
+"<br><b style='color:#ff7777'>⚠️ 악몽: 암호는 매 게임마다 바뀝니다.</b>":
+""}
+</p>
+
+<input
+id="codeInput"
+class="input"
+type="text"
+inputmode="numeric"
+maxlength="8"
+autocomplete="off"
+placeholder="암호 입력"
+>
+
+<div class="actions">
+
+<button class="ok"
+onclick="submitCode()">
+확인
+</button>
+
+<button class="cancel"
+onclick="closeModal()">
+취소
+</button>
+
+</div>
+`;
+
+setTimeout(()=>{
+
+const input=document.getElementById("codeInput");
+
+if(input){
+
+input.focus();
+
+input.onkeydown=e=>{
+if(e.key==="Enter")submitCode();
+};
+
+}
+
+},50);
+}
+
+function submitCode(){
+
+const input=document.getElementById("codeInput");
+
+if(!input)return;
+
+if(input.value.trim()===String(currentCode)){
+
+flags.code=true;
+
+closeModal();
+
+say("🔓 암호가 맞았다! 잠금이 해제됐다.");
+
+}else{
+
+input.value="";
+
+input.focus();
+
+if(level()>=2){
+
+APP.classList.add("shake");
+
+setTimeout(()=>{
+APP.classList.remove("shake");
+},350);
+}
+
+say("❌ 암호가 틀렸다.");
+}
+}
+
+function closeModal(){
+M.style.display="none";
+}
+
+/* 방 */
+
+function loadRoom(n){
+
+room=n;
+flags={};
+usedWarning=false;
+fakeUsed=false;
+
+clearWorld();
+
+document.getElementById("room").textContent=
+`ROOM ${n} / 10`;
+
+document.getElementById("roomName").textContent=
+names[n-1];
+
+if(n===1)room1();
+if(n===2)room2();
+if(n===3)room3();
+if(n===4)room4();
+if(n===5)room5();
+if(n===6)room6();
+if(n===7)room7();
+if(n===8)room8();
+if(n===9)room9();
+if(n===10)room10();
+}
+
+/* ROOM 1 */
+
+function room1(){
+
+base();
+
+let code;
+
+if(difficulty==="easy")code="413";
+else if(difficulty==="normal")code="731";
+else if(difficulty==="hard")code="5831";
+else{
+code=randomCode();
+flags.secretCode=code;
+}
+
+door(44,12,()=>{
+
+if(flags.code)nextRoom();
+else say("🔒 암호가 필요하다.");
+});
+
+if(difficulty==="easy"){
+
+note(
+17,28,
+`
+<b>연구원 메모</b><br>
+314를 거꾸로 읽어라.
+`,
+()=>{
+say("314 → 413");
+}
+);
+
+}
+
+else if(difficulty==="normal"){
+
+note(
+17,28,
+`
+<b>찢어진 기록</b><br>
+첫 숫자는 7.<br>
+마지막 숫자는 1.<br>
+가운데는 3.
+`,
+()=>{
+say("순서를 조합하면 731.");
+}
+);
+
+}
+
+else{
+
+note(
+16,27,
+`
+<b>암호 기록</b><br>
+1번째 = 5<br>
+2번째 = 8<br>
+3번째 = 3<br>
+4번째 = 1
+`,
+()=>{
+say("순서를 잘 확인해야 한다.");
+}
+);
+
+}
+
+panel(
+67,50,
+()=>openCode(code)
+);
+}
+
+/* ROOM 2 */
+
+function room2(){
+
+base();
+
+wall(33,15,4,70);
+wall(62,27,4,58);
+
+door(79,62,()=>{
+
+if(has("key")&&has("key2")){
+
+nextRoom();
+
+}else{
+
+say("🔒 열쇠 2개가 필요하다.");
+}
+});
+
+itemObject(
+16,24,
+"🗝️",
+"열쇠 A",
+()=>getItem("key")
+);
+
+itemObject(
+72,24,
+"🗝️",
+"열쇠 B",
+()=>getItem("key2")
+);
+
+note(
+42,40,
+`
+<b>창고 기록</b><br>
+왼쪽 상자와<br>
+오른쪽 상자를 찾아라.
+`,
+()=>{
+say("열쇠는 서로 다른 곳에 있다.");
+}
+);
+
+if(level()>=2){
+
+itemObject(
+46,67,
+"🗝️",
+"가짜 열쇠",
+()=>{
+say("❌ 가짜 열쇠다!");
+APP.classList.add("shake");
+setTimeout(()=>APP.classList.remove("shake"),300);
+}
+);
+
+}
+
+}
+
+/* ROOM 3 */
+
+function room3(){
+
+base();
+
+wall(27,15,4,68);
+wall(51,28,4,57);
+wall(75,15,4,68);
+
+let code=
+difficulty==="easy"?"284":
+difficulty==="normal"?"824":
+difficulty==="hard"?"428":
+randomCode();
+
+door(8,65,()=>{
+
+if(flags.code)nextRoom();
+else say("🔒 색상 암호가 필요하다.");
+});
+
+note(
+14,23,
+`
+<b>색상 기록</b><br>
+🔴 = 2<br>
+🔵 = 8<br>
+🟢 = 4
+`,
+()=>{
+say("색상의 순서를 잘 살펴보자.");
+}
+);
+
+if(level()>=2){
+
+note(
+15,55,
+`
+<b>추가 기록</b><br>
+경고: 일부 기록은<br>
+순서가 뒤집혀 있다.
+`,
+()=>{
+say("문서가 거꾸로 되어 있을 수도 있다.");
+}
+);
+
+}
+
+panel(
+62,48,
+()=>openCode(code),
+"보안 패널"
+);
+
+}
+
+/* ROOM 4 */
+
+function room4(){
+
+base();
+
+wall(20,25,55,4);
+wall(20,55,4,30);
+wall(70,25,4,60);
+
+let code=
+difficulty==="easy"?"32":
+difficulty==="normal"?"32":
+difficulty==="hard"?"96":
+randomCode();
+
+door(43,12,()=>{
+
+if(flags.code)nextRoom();
+else say("🔒 계산 암호가 필요하다.");
+});
+
+note(
+55,63,
+`
+<b>실험 공식</b><br>
+2 × 6 = 12<br>
+3 × 7 = 21<br>
+4 × 8 = ?
+`,
+()=>{
+say(level()>=2?"규칙을 직접 계산하라.":"정답은 32.");
+}
+);
+
+if(level()>=2){
+
+note(
+25,65,
+`
+<b>주의</b><br>
+계산 결과를<br>
+다른 장치와 비교하라.
+`,
+()=>{
+say("단순히 숫자 하나만 보는 게 아니다.");
+}
+);
+
+}
+
+panel(
+24,39,
+()=>openCode(code),
+"실험실"
+);
+
+}
+
+/* ROOM 5 */
+
+function room5(){
+
+base();
+
+wall(30,15,4,70);
+wall(60,15,4,70);
+
+door(80,22,()=>{
+
+if(has("flash"))nextRoom();
+else say("🔒 손전등이 필요하다.");
+});
+
+itemObject(
+17,64,
+"🔦",
+"손전등",
+()=>getItem("flash")
+);
+
+note(
+42,67,
+`
+<b>낙서</b><br>
+빛이 없으면<br>
+보이지 않는 문이 있다.
+`,
+()=>{
+say("손전등을 찾자.");
+}
+);
+
+if(level()>=1){
+
+itemObject(
+68,55,
+"🔋",
+"배터리",
+()=>{
+getItem("battery");
+say("손전등이 더 강해졌다.");
+}
+);
+
+}
+
+if(level()>=2){
+
+setTimeout(ghostWarning,1500);
+
+}
+
+}
+
+/* ROOM 6 */
+
+function room6(){
+
+base();
+
+wall(45,15,4,70);
+
+door(9,28,()=>{
+
+if(flags.power)nextRoom();
+else say("🔒 전력을 복구해야 한다.");
+});
+
+itemObject(
+69,25,
+"⚡",
+"퓨즈",
+()=>getItem("fuse")
+);
+
+itemObject(
+69,62,
+"🔌",
+"케이블",
+()=>getItem("cable")
+);
+
+panel(
+24,42,
+()=>{
+
+if(has("fuse")&&has("cable")){
+
+flags.power=true;
+
+say("⚡ 전력 복구 성공!");
+
+}else{
+
+say("퓨즈와 케이블이 필요하다.");
+}
+
+},
+"발전기"
+);
+
+if(level()>=3){
+
+itemObject(
+18,65,
+"⚡",
+"손상된 퓨즈",
+()=>{
+say("❌ 이건 고장났다.");
+}
+);
+
+}
+
+}
+
+/* ROOM 7 */
+
+function room7(){
+
+base();
+
+wall(24,18,4,67);
+wall(50,18,4,67);
+wall(76,18,4,67);
+
+let code;
+
+if(difficulty==="easy")code="137";
+else if(difficulty==="normal")code="137";
+else if(difficulty==="hard")code="713";
+else code=randomCode();
+
+door(45,70,()=>{
+
+if(flags.code)nextRoom();
+else say("🔒 거울 암호가 필요하다.");
+});
+
+note(
+13,30,
+`
+<b>거울의 문</b><br>
+731<br><br>
+모든 것이 반대다.
+`,
+()=>{
+say("731을 뒤집으면 137.");
+}
+);
+
+if(level()>=2){
+
+note(
+55,58,
+`
+<b>깨진 거울</b><br>
+일부 숫자는<br>
+반대로 보인다.
+`,
+()=>{
+say("보이는 숫자를 그대로 믿지 마라.");
+}
+);
+
+}
+
+panel(
+63,30,
+()=>openCode(code),
+"Mirror Lock"
+);
+
+}
+
+/* ROOM 8 */
+
+function room8(){
+
+base();
+
+wall(35,15,4,70);
+wall(65,15,4,70);
+
+door(8,43,()=>{
+
+if(flags.sec)nextRoom();
+else say("🔒 보안 해제가 필요하다.");
+});
+
+itemObject(
+77,24,
+"💳",
+"보안 카드",
+()=>getItem("card")
+);
+
+panel(
+47,37,
+()=>{
+
+if(has("card")){
+
+flags.sec=true;
+
+say("🟢 보안 시스템 해제!");
+
+}else{
+
+say("보안 카드가 없다.");
+}
+
+},
+"SECURITY"
+);
+
+note(
+18,65,
+`
+<b>보안 기록</b><br>
+카드 소지자만<br>
+패널을 사용할 수 있다.
+`,
+()=>{
+say("카드를 먼저 찾아야 한다.");
+}
+);
+
+if(level()>=2){
+
+itemObject(
+45,66,
+"💳",
+"위조 카드",
+()=>{
+say("❌ 위조 카드다!");
+}
+);
+
+}
+
+}
+
+/* ROOM 9 */
+
+function room9(){
+
+base();
+
+wall(20,18,4,65);
+wall(43,30,4,55);
+wall(67,18,4,65);
+
+door(
+8,15,
+()=>{
+fakeDoor();
+},
+true
+);
+
+door(
+78,15,
+()=>{
+
+if(has("star"))nextRoom();
+else say("🔒 ⭐ 별표가 필요하다.");
+}
+);
+
+note(
+41,21,
+`
+<b>뒤틀린 기록</b><br>
+왼쪽 문은 거짓말.<br>
+오른쪽 문을 찾아라.
+`,
+()=>{
+say("오른쪽 문이 진짜다.");
+}
+);
+
+itemObject(
+53,66,
+"⭐",
+"별표",
+()=>getItem("star")
+);
+
+if(level()>=2){
+
+door(
+45,15,
+()=>{
+say("❌ 또 다른 가짜 출구다!");
+APP.classList.add("shake");
+setTimeout(()=>APP.classList.remove("shake"),500);
+},
+true
+);
+
+}
+
+if(level()>=3){
+
+setTimeout(ghostWarning,1300);
+
+}
+
+}
+
+function fakeDoor(){
+
+fakeUsed=true;
+
+say(
+difficulty==="night"?
+"💀 함정이다! 뒤에서 소리가 들린다!":
+"❌ 가짜 출구다!"
+);
+
+APP.classList.add("shake");
+
+setTimeout(()=>{
+APP.classList.remove("shake");
+},700);
+
+if(difficulty==="night"){
+
+setTimeout(()=>{
+say("👻 도망쳐!");
+},700);
+
+}
+
+}
+
+/* ROOM 10 */
+
+function room10(){
+
+base();
+
+wall(28,18,4,60);
+wall(68,18,4,60);
+
+door(
+44,13,
+()=>{
+
+if(has("final")){
+
+finish();
+
+}else{
+
+say("🔒 마지막 열쇠가 필요하다.");
+}
+
+}
+);
+
+note(
+61,35,
+`
+<b>최종 기록</b><br>
+마지막 열쇠는<br>
+문 근처에 있다.
+`,
+()=>{
+say("마지막 열쇠를 찾아라.");
+}
+);
+
+itemObject(
+46,67,
+"🗝️",
+"최종 열쇠",
+()=>getItem("final")
+);
+
+if(level()>=2){
+
+note(
+14,58,
+`
+<b>경고</b><br>
+마지막 방이라고<br>
+방심하지 마라.
+`,
+()=>{
+say("끝까지 조심하자.");
+}
+);
+
+}
+
+if(level()>=2){
+
+setTimeout(ghostWarning,1800);
+
+}
+
+}
+
+/* 귀신 */
+
+function ghostWarning(){
+
+if(usedWarning)return;
+
+usedWarning=true;
+
+const w=document.getElementById("warning");
+
+w.style.display="flex";
+
+APP.classList.add("shake");
+
+say("⚠️ 뭔가 가까이 다가오고 있다!");
+
+setTimeout(()=>{
+
+w.style.display="none";
+
+APP.classList.remove("shake");
+
+say("👻 !!! 무언가가 바로 뒤에 있었다!");
+
+},1700);
+
+}
+
+/* 다음 방 */
+
+function nextRoom(){
+
+if(room>=10){
+
+finish();
+
+return;
+}
+
+M.style.display="flex";
+
+C.innerHTML=`
+<h2>🚪 ROOM ${room} 탈출 성공!</h2>
+<p>
+이번 방은 끝났습니다.<br>
+하지만 다음 방은 더 어려워집니다.
+</p>
+<button class="ok"
+onclick="M.style.display='none';loadRoom(${room+1})">
+ROOM ${room+1} →
+</button>
+`;
+
+}
+
+function loadRoom(n){
+
+room=n;
+
+flags={};
+
+usedWarning=false;
+
+fakeUsed=false;
+
+clearWorld();
+
+document.getElementById("room").textContent=
+`ROOM ${n} / 10`;
+
+document.getElementById("roomName").textContent=
+names[n-1];
+
+if(n===1)room1();
+if(n===2)room2();
+if(n===3)room3();
+if(n===4)room4();
+if(n===5)room5();
+if(n===6)room6();
+if(n===7)room7();
+if(n===8)room8();
+if(n===9)room9();
+if(n===10)room10();
+}
+
+/* 엔딩 */
+
+function finish(){
+
+started=false;
+
+clearInterval(timer);
+clearTimeout(limitTimer);
+
+const total=(Date.now()-startTime)/1000;
+
+const key="escapeBest_"+difficulty;
+
+const oldBest=
+Number(localStorage.getItem(key)||0);
+
+let record=false;
+
+if(!oldBest||total<oldBest){
+
+localStorage.setItem(
+key,
+Math.floor(total)
+);
+
+record=true;
+}
+
+M.style.display="flex";
+
+C.innerHTML=`
+<h2>🏆 완전 탈출 성공!</h2>
+
+<p>
+10개의 방을 모두 탈출했습니다!<br>
+난이도: <b>${difficultyName()}</b>
+</p>
+
+<div style="
+font-size:44px;
+color:#68f3c0;
+text-align:center;
+font-weight:900;
+margin:20px 0
+">
+${formatTime(total)}
+</div>
+
+<p style="text-align:center">
+${record?
+"✨ "+difficultyName()+" 신기록!":
+"🏆 최고 기록 "+formatTime(oldBest)}
+</p>
+
+<button class="ok"
+onclick="location.reload()">
+다시 도전
+</button>
+`;
+
+}
+
+document.addEventListener("keydown",e=>{
+
+if(e.key==="Escape"){
+
+M.style.display="none";
+
+}
+
+});
 
 </script>
-
 </body>
 </html>

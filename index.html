@@ -2,1369 +2,634 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>RANDOM ESCAPE</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>폐병원 탈출</title>
 <style>
 *{box-sizing:border-box}
-html,body{margin:0;width:100%;height:100%;overflow:hidden;font-family:Arial,"Noto Sans KR",sans-serif;background:#05080d;color:#fff}
-button{border:0;border-radius:14px;padding:13px 20px;font-weight:900;cursor:pointer}
-#app{position:relative;width:100%;height:100%;overflow:hidden;background:radial-gradient(circle at 50% 45%,#26384d,#0b111b 55%,#03050a)}
-#start{position:absolute;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 40%,#1d334c,#05070c 72%)}
-.start{width:min(900px,94vw);text-align:center}
-.start h1{margin:0;font-size:clamp(44px,9vw,88px);letter-spacing:5px}
-.start h1 span{color:#62f2bd}
-.start p{color:#aebbd0;line-height:1.8}
-.diff{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:25px 0}
-.d{padding:20px 10px;background:#0d1522;color:#fff;border:1px solid #34455d}
-.d b{display:block;font-size:21px;margin-bottom:8px}
-.d small{color:#9aaac0}
-.d.sel{outline:3px solid #62f2bd;background:#102a20;transform:translateY(-4px)}
-.startBtn{background:#62f2bd;color:#06140f;font-size:20px;padding:17px 38px}
-#hud{position:absolute;z-index:100;top:0;left:0;right:0;padding:12px;display:flex;justify-content:space-between;gap:8px;pointer-events:none}
-.group{display:flex;gap:7px;flex-wrap:wrap}
-.badge{background:#08111de8;border:1px solid #40516c;border-radius:12px;padding:8px 12px;font-size:13px;box-shadow:0 8px 25px #0008}
-.badge b{color:#68f3c0}
-#world{position:absolute;inset:0}
-.floor{position:absolute;left:4%;top:12%;width:92%;height:78%;border:3px solid #46566e;background:repeating-linear-gradient(90deg,#171f2a 0 47px,#1d2733 48px 49px),repeating-linear-gradient(0deg,transparent 0 47px,#0002 48px 49px);box-shadow:inset 0 0 100px #000d}
-.wall{position:absolute;z-index:2;background:linear-gradient(135deg,#4a586e,#202a39);border:2px solid #687b96;box-shadow:inset 0 0 25px #0009,0 10px 30px #0009}
-.obj{position:absolute;z-index:30;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s;pointer-events:auto}
-.obj:hover{transform:scale(1.05);filter:brightness(1.3)}
-.panel{background:#07111c;border:3px solid #627695;border-radius:11px;flex-direction:column;color:#68f5c4;font-family:monospace;box-shadow:0 10px 30px #000}
-.panel b{font-size:22px;letter-spacing:3px}
-.panel small{color:#91a0b5;font-family:Arial;margin-top:6px}
-.door{width:105px;height:160px;border:5px solid #aa7048;border-radius:12px 12px 3px 3px;background:linear-gradient(90deg,#27150f,#754126,#351c13);box-shadow:inset 0 0 25px #000,0 12px 30px #000;flex-direction:column}
-.door strong{font-size:28px}
-.door span{font-size:11px;color:#ffe0c1}
-.item{width:72px;height:72px;border-radius:17px;background:#091423ee;border:2px solid #72839e;box-shadow:0 10px 25px #000;flex-direction:column;font-size:29px}
-.item small{font-size:10px;color:#aebbd0;margin-top:3px}
-.note{width:165px;min-height:95px;padding:12px;background:#ded09a;color:#332d21;box-shadow:0 12px 25px #0009;font-size:12px;line-height:1.5;display:block}
-.note:hover{transform:rotate(0) scale(1.05)}
-.fake{border-color:#9c4444!important}
-#inventory{position:absolute;z-index:120;right:12px;bottom:12px;display:flex;gap:6px}
-.slot{width:46px;height:46px;border-radius:11px;border:1px solid #455873;background:#0b1421e8;display:flex;align-items:center;justify-content:center;font-size:22px}
-#msg{position:absolute;z-index:200;left:50%;bottom:35px;transform:translateX(-50%);width:min(680px,90vw);padding:14px 18px;text-align:center;border:1px solid #4c5e7a;border-radius:14px;background:#050a13ee;box-shadow:0 15px 45px #000c;opacity:0;transition:.2s;pointer-events:none}
-#modal{position:absolute;z-index:500;inset:0;display:none;align-items:center;justify-content:center;background:#02040bdc;backdrop-filter:blur(7px)}
-.card{width:min(600px,92vw);padding:30px;border-radius:22px;border:1px solid #4c5e7b;background:linear-gradient(145deg,#151e2d,#080d15);box-shadow:0 30px 100px #000}
-.card h2{margin:0 0 10px;font-size:30px}
-.card p{color:#adbacd;line-height:1.7}
-.input{width:100%;padding:16px;border-radius:12px;border:2px solid #536984;background:#050a12;color:#6dffd0;font-size:30px;text-align:center;letter-spacing:7px;outline:none}
-.input:focus{border-color:#62f2bd;box-shadow:0 0 20px #62f2bd33}
-.actions{display:flex;gap:10px;margin-top:14px}
-.ok{background:#62f2bd;color:#06140f}
-.cancel{background:#29364a;color:#fff}
-#warning{position:absolute;z-index:800;inset:0;display:none;align-items:center;justify-content:center;background:#8d000022;pointer-events:none}
-.warning{color:#ff5050;text-align:center;font-size:clamp(30px,6vw,72px);font-weight:1000;text-shadow:0 0 25px red,4px 4px #000;animation:pulse .18s infinite alternate}
-.warning small{display:block;font-size:19px;margin-top:10px}
-#limit{position:absolute;z-index:110;left:50%;top:78px;transform:translateX(-50%);padding:8px 15px;border-radius:12px;background:#350d0d;border:1px solid #a53b3b;color:#ff8c8c;display:none;font-weight:900}
-.shake{animation:shake .08s infinite}
-@keyframes shake{0%{transform:translate(0)}25%{transform:translate(5px,-3px)}50%{transform:translate(-5px,4px)}75%{transform:translate(3px,3px)}100%{transform:translate(-3px,-4px)}}
-@keyframes pulse{from{opacity:.2}to{opacity:1}}
-@media(max-width:720px){
-.diff{grid-template-columns:2fr 2fr}
-.d{padding:14px 6px}
-.badge{font-size:11px}
-.door{width:82px;height:125px}
+html,body{margin:0;width:100%;height:100%;overflow:hidden;background:#101318;color:#fff;font-family:Arial,sans-serif;touch-action:none}
+canvas{display:block;width:100%;height:100%}
+#hud{position:fixed;z-index:10;top:10px;left:10px;right:10px;display:flex;justify-content:space-between;pointer-events:none}
+.box{background:#10151dcc;border:1px solid #79828d;border-radius:10px;padding:8px 12px;font-size:13px;box-shadow:0 3px 15px #0008}
+.bar{width:130px;height:7px;background:#303640;border-radius:5px;overflow:hidden;margin-top:4px}
+#batbar{height:100%;width:100%;background:#c9df73}
+#stambar{height:100%;width:100%;background:#6dafff}
+#msg{position:fixed;z-index:20;left:50%;bottom:100px;transform:translateX(-50%);background:#10151fee;border:1px solid #7d8794;border-radius:10px;padding:11px 17px;opacity:0;transition:.2s;max-width:90%;text-align:center;pointer-events:none}
+#hint{position:fixed;z-index:10;bottom:15px;left:50%;transform:translateX(-50%);font-size:12px;color:#d5d9de;pointer-events:none}
+#mobile{display:none;position:fixed;z-index:30;inset:0;pointer-events:none}
+#joy{position:absolute;left:18px;bottom:20px;width:125px;height:125px;border:2px solid #8b949f;background:#1c2430dd;border-radius:50%;pointer-events:auto}
+#knob{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;background:#9ba7b7}
+.mbtn{position:absolute;width:68px;height:68px;border-radius:50%;background:#1c2430ee;color:#fff;border:2px solid #8b949f;font-size:24px;pointer-events:auto}
+#flash{right:18px;bottom:125px}
+#use{right:100px;bottom:45px}
+#run{right:18px;bottom:40px}
+.overlay{position:fixed;z-index:100;inset:0;display:flex;align-items:center;justify-content:center;background:#000b;padding:20px}
+.panel{width:min(600px,94vw);background:linear-gradient(#202731,#0d1116);border:1px solid #78828d;border-radius:18px;padding:30px;text-align:center;box-shadow:0 0 70px #000}
+.panel h1{font-size:35px;margin:0 0 12px}
+.panel p{color:#c6cbd1;line-height:1.7}
+button{padding:13px 25px;border-radius:10px;border:1px solid #8b95a2;background:#303b4b;color:#fff;font-weight:bold}
+button:active{transform:scale(.95)}
+.hidden{display:none!important}
+
+#warning{
+ position:fixed;z-index:50;inset:0;display:flex;align-items:center;
+ justify-content:center;pointer-events:none;opacity:0;
+ background:rgba(130,0,0,.10);transition:opacity .15s
 }
+#warningText{
+ color:#ff5b5b;font-size:clamp(24px,5vw,54px);font-weight:900;
+ text-shadow:0 0 15px #f00,2px 2px #000;letter-spacing:3px;
+ text-align:center
+}
+.warnFlash{animation:warnFlash .18s infinite alternate}
+@keyframes warnFlash{from{opacity:.25}to{opacity:1}}
+.shake{animation:screenShake .08s infinite}
+@keyframes screenShake{
+ 0%{transform:translate(0,0)}
+ 25%{transform:translate(5px,-3px)}
+ 50%{transform:translate(-4px,4px)}
+ 75%{transform:translate(3px,3px)}
+ 100%{transform:translate(-3px,-4px)}
+}
+
+#collectionBtn{position:fixed;right:12px;top:145px;z-index:25;background:#202a35;border:1px solid #8793a0;color:white;border-radius:9px;padding:9px 12px}
+#collection{position:fixed;z-index:80;inset:0;background:#080b0eee;display:none;overflow:auto;padding:25px}
+#collection .sheet{max-width:760px;margin:auto;background:#18202a;border:1px solid #66717d;border-radius:16px;padding:20px}
+#collection h2{margin-top:0}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.card{background:#242d37;border:1px solid #46515e;border-radius:10px;padding:12px;min-height:75px}
+.card.lock{opacity:.45}
+.card b{display:block;margin-bottom:5px}
+#danger{position:fixed;z-index:40;inset:0;pointer-events:none;opacity:0;background:radial-gradient(circle,transparent 30%,rgba(150,0,0,.45));transition:opacity .2s}
+#heartbeat{position:fixed;z-index:41;inset:0;pointer-events:none;opacity:0;border:5px solid rgba(255,30,30,.35)}
+.pulse{animation:pulse .35s infinite alternate}
+@keyframes pulse{from{opacity:.15}to{opacity:.8}}
+@media(max-width:800px){#collectionBtn{top:190px}}
 </style>
 </head>
-
 <body>
-<div id="app">
-
-<div id="start">
-<div class="start">
-<h1>RANDOM <span>ESCAPE</span></h1>
-<p>
-10개의 방을 탈출하세요.<br>
-난이도가 올라갈수록 암호가 복잡해지고 가짜 출구와 함정이 늘어납니다.
-</p>
-
-<div class="diff">
-<button class="d sel" data-d="easy">
-<b>🟢 쉬움</b>
-<small>힌트 많음 · 함정 적음</small>
-</button>
-
-<button class="d" data-d="normal">
-<b>🟡 보통</b>
-<small>기본 난이도</small>
-</button>
-
-<button class="d" data-d="hard">
-<b>🔴 어려움</b>
-<small>힌트 감소 · 퍼즐 강화</small>
-</button>
-
-<button class="d" data-d="night">
-<b>💀 악몽</b>
-<small>랜덤 암호 · 함정 · 귀신</small>
-</button>
-</div>
-
-<button class="startBtn" onclick="start()">GAME START</button>
-</div>
-</div>
+<canvas id="game"></canvas>
 
 <div id="hud">
-<div class="group">
-<div class="badge">🚪 <b id="room">ROOM 1 / 10</b></div>
-<div class="badge" id="roomName">폐쇄 연구실</div>
-<div class="badge">난이도 <b id="difficulty">쉬움</b></div>
+  <div class="box">
+    <b>🏥 폐병원</b><br>
+    <span id="room">동관 1층</span><br>
+    🔋 <span id="bat">100</span>%
+    <div class="bar"><div id="batbar"></div></div>
+    🏃 <span id="sta">100</span>%
+    <div class="bar"><div id="stambar"></div></div>
+  </div>
+  <div class="box">
+    🔑 <span id="key">없음</span><br>
+    🔦 <span id="flashState">ON</span>
+  </div>
 </div>
 
-<div class="group">
-<div class="badge">🎒 <b id="count">0</b></div>
-<div class="badge">⏱️ <b id="time">0:00</b></div>
-</div>
+<div id="msg"></div><div id="warning"><div id="warningText">⚠️ 위험</div></div>
+<button id="collectionBtn" onclick="openCollection()">🏆 도감</button>
+<div id="danger"></div><div id="heartbeat"></div>
+<div id="collection"><div class="sheet">
+<h2>📖 엔딩 & 업적 도감</h2>
+<div id="endingList" class="cards"></div><br>
+<div id="achievementList" class="cards"></div><br>
+<button onclick="closeCollection()">닫기</button>
+</div></div>
+<div id="hint">WASD 이동 · SHIFT 달리기 · E 조사 · F 손전등</div>
+
+<div id="mobile">
+  <div id="joy"><div id="knob"></div></div>
+  <button class="mbtn" id="flash">🔦</button>
+  <button class="mbtn" id="use">✋</button>
+  <button class="mbtn" id="run">🏃</button>
 </div>
 
-<div id="limit">⏳ 제한시간</div>
-<div id="world"></div>
-<div id="inventory"></div>
-<div id="msg"></div>
-
-<div id="warning">
-<div class="warning">
-⚠️ 위험 감지
-<small>발자국 소리가 가까워진다...</small>
-</div>
+<div id="start" class="overlay">
+  <div class="panel">
+    <h1>🏥 폐병원 탈출</h1>
+    <p>버려진 병원에서 열쇠와 단서를 찾아 탈출하세요.</p>
+    <p>어둡지만 이번 버전은 <b>플레이하기 편하도록 밝게</b> 만들었습니다.</p>
+    <button onclick="startGame()">게임 시작</button>
+  </div>
 </div>
 
-<div id="modal">
-<div class="card" id="card"></div>
-</div>
-
+<div id="end" class="overlay hidden">
+  <div class="panel">
+    <h1 id="endTitle"></h1>
+    <p id="endText"></p>
+    <button onclick="location.reload()">다시 하기</button>
+  </div>
 </div>
 
 <script>
-const W=document.getElementById("world");
-const M=document.getElementById("modal");
-const C=document.getElementById("card");
-const MSG=document.getElementById("msg");
-const APP=document.getElementById("app");
+"use strict";
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+let W=innerWidth,H=innerHeight;
+function resize(){W=innerWidth;H=innerHeight;canvas.width=W;canvas.height=H}
+resize();addEventListener("resize",resize);
 
-const names=[
-"폐쇄 연구실",
-"낡은 창고",
-"기록 보관실",
-"실험실",
-"지하 복도",
-"전기실",
-"거울의 방",
-"보안실",
-"뒤틀린 연구소",
-"최종 출구"
+const WW=2400,WH=1600;
+let player={x:300,y:800,speed:3,stamina:100};
+let cam={x:0,y:0};
+let battery=100, flashlight=true, hasKey=false, hasCode=false;
+let running=false,sprint=false;
+let keys={};
+let jx=0,jy=0;
+let ghost={x:2000,y:500,active:false,speed:1.35};
+let ghostClock=0;
+let warning=false;
+let warningTimer=null;
+
+const walls=[
+{x:0,y:0,w:WW,h:45},{x:0,y:WH-45,w:WW,h:45},
+{x:0,y:0,w:45,h:WH},{x:WW-45,y:0,w:45,h:WH},
+{x:45,y:300,w:700,h:38},{x:45,y:1260,w:700,h:38},
+{x:745,y:45,w:38,h:550},{x:745,y:1000,w:38,h:560},
+{x:1080,y:300,w:38,h:500},{x:1080,y:900,w:38,h:400},
+{x:1500,y:45,w:38,h:500},{x:1500,y:1060,w:38,h:500},
+{x:450,y:500,w:295,h:38},{x:450,y:1100,w:295,h:38},
+{x:1160,y:500,w:340,h:38},{x:1160,y:1060,w:340,h:38},
+{x:1650,y:300,w:300,h:38},{x:1650,y:1260,w:300,h:38}
 ];
 
-const ICON={
-key:"🗝️",
-key2:"🗝️",
-flash:"🔦",
-fuse:"⚡",
-cable:"🔌",
-card:"💳",
-star:"⭐",
-final:"🗝️",
-battery:"🔋"
-};
+const objects=[
+{x:250,y:210,t:"desk"},{x:570,y:210,t:"locker"},{x:880,y:180,t:"bed"},
+{x:1260,y:210,t:"desk"},{x:1380,y:740,t:"cabinet"},{x:1750,y:210,t:"desk"},
+{x:1880,y:800,t:"key"},{x:900,y:1320,t:"note"},{x:500,y:900,t:"banana"},
+{x:1280,y:820,t:"puzzle"},{x:1800,y:1100,t:"battery"},{x:2150,y:800,t:"exit"}
+];
 
-let difficulty="easy";
-let room=1;
-let inv=[];
-let flags={};
-let started=false;
-let startTime=0;
-let timer=null;
-let limitTimer=null;
-let usedWarning=false;
-let currentCode=null;
-let fakeUsed=false;
 
-document.querySelectorAll(".d").forEach(btn=>{
-btn.onclick=()=>{
-document.querySelectorAll(".d").forEach(x=>x.classList.remove("sel"));
-btn.classList.add("sel");
-difficulty=btn.dataset.d;
-};
+let stage=1, stageWalls=[], mapObjects=[];
+let endings=JSON.parse(localStorage.getItem("hospitalEndings")||"[]");
+let achievements=JSON.parse(localStorage.getItem("hospitalAchievements")||"[]");
+let secretItems=JSON.parse(localStorage.getItem("hospitalSecrets")||"[]");
+let secretDoor=false, survivalSeconds=0, totalDeaths=0;
+let visitedStages=JSON.parse(localStorage.getItem("hospitalVisitedStages")||"[]");
+const stageNames=["입원동","지하 병동","수술동","격리동","지하 연구실"];
+function stageName(n){return stageNames[n-1]||"미지의 구역";}
+
+function buildMap(n){
+ stage=n; hasKey=false; hasCode=false;
+ if(!visitedStages.includes(n)){
+  visitedStages.push(n);
+  localStorage.setItem("hospitalVisitedStages",JSON.stringify(visitedStages));
+  if(visitedStages.length>=5) unlock("explorer");
+ }
+ player.x=170; player.y=800; player.stamina=100;
+ stageWalls=[
+  {x:0,y:0,w:WW,h:45},{x:0,y:WH-45,w:WW,h:45},
+  {x:0,y:0,w:45,h:WH},{x:WW-45,y:0,w:45,h:WH}
+ ];
+ const layouts=[
+ [[450,250,40,950],[850,250,40,500],[1250,850,40,450],[1650,250,40,950],[2050,250,40,500]],
+ [[350,180,40,480],[350,940,40,480],[700,350,700,40],[700,1210,700,40],[1500,180,40,480],[1500,940,40,480],[1850,350,40,900]],
+ [[300,220,40,430],[300,950,40,430],[600,220,850,40],[600,1340,850,40],[700,500,40,500],[1500,220,40,430],[1500,950,40,430],[1800,500,400,40],[1800,1060,400,40]],
+ [[280,170,40,430],[280,1000,40,430],[560,170,40,500],[560,930,40,500],[850,170,40,950],[1150,170,40,430],[1150,1000,40,430],[1450,170,40,950],[1750,170,40,500],[1750,930,40,500],[2050,500,40,600]],
+ [[250,150,40,380],[250,1070,40,380],[500,150,700,40],[500,1410,700,40],[700,350,40,650],[1150,150,40,500],[1150,950,40,500],[1450,150,750,40],[1450,1410,750,40],[1650,350,40,350],[1650,900,40,350],[2050,350,40,400],[2050,850,40,400]]
+ ];
+ for(const a of layouts[n-1])stageWalls.push({x:a[0],y:a[1],w:a[2],h:a[3]});
+ mapObjects=[
+  {x:WW-180,y:800,t:"exit"},
+  {x:WW-500,y:n%2?500:1100,t:"key"},
+  {x:650,y:800,t:"desk"},
+  {x:1000,y:500,t:"locker"},
+  {x:1450,y:800,t:"battery"}
+ ];
+ if(n>=2)mapObjects.push({x:900,y:1250,t:"note"});
+ if(n>=3)mapObjects.push({x:1350,y:750,t:"puzzle"});
+ if(n>=4)mapObjects.push({x:1850,y:700,t:"cabinet"});
+ if(n>=3)mapObjects.push({x:WW-320,y:520,t:"wrongDoor"});
+ if(n===5)mapObjects.push({x:2050,y:1200,t:"banana"});
+ mapObjects.push({x:300+n*90,y:650,t:"secret"});
+ if(n===5)mapObjects.push({x:2150,y:1200,t:"secretDoor"});
+ ghost.x=WW-650; ghost.y=n%2?450:1150;
+ ghost.active=false; ghost.speed=1.25+n*.28; ghostClock=0;
+ showMsg("📍 "+stageName(n)+" · "+n+"/5");
+}
+
+const endingData=[
+ ["normal","🟢 일반 탈출","5개 구역을 정상적으로 탈출"],
+ ["death","💀 사망","귀신에게 잡히기"],
+ ["dark","🔋 암흑","손전등 없이 30초 생존 후 탈출"],
+ ["wrong","🚪 잘못된 선택","숨겨진 잘못된 문을 조사"],
+ ["lab","🧪 실험체","5맵의 실험 기록을 모두 발견"],
+ ["truth","👁️ 진실","비밀 단서 5개를 모두 발견"],
+ ["banana","🍌 병맛","바나나 이벤트 발견"],
+ ["secret","🔴 비밀","숨겨진 문으로 탈출"],
+ ["ghost","👻 귀신의 정체","귀신 관련 비밀 이벤트 발견"]
+];
+const achievementData=[
+ ["firstkey","🔑 첫 열쇠","열쇠를 처음 획득"],
+ ["firstdoor","🚪 첫 문","첫 구역 탈출"],
+ ["explorer","🏥 탐험가","5개 구역 방문"],
+ ["firstghost","👻 첫 조우","귀신을 처음 만남"],
+ ["runner","🏃 도망자","귀신 추격에서 탈출"],
+ ["battery","🔋 절약왕","배터리 50% 이상으로 탈출"],
+ ["darktime","🌑 어둠 속에서","손전등 없이 30초 생존"],
+ ["notes","🗒️ 기록 수집가","모든 기록 발견"],
+ ["detective","🕵️ 탐정","비밀 단서 5개 발견"],
+ ["banana","🍌 바나나 중독","바나나 이벤트 발견"],
+ ["death","💀 희생자","사망 엔딩 보기"],
+ ["truth","👁️ 진실을 본 자","진실 엔딩 보기"],
+ ["secretdoor","🔴 금지된 문","비밀 문 발견"],
+ ["lab","🧪 실험체","실험실의 비밀 발견"],
+ ["master","🏆 완전 정복","모든 엔딩 해금"]
+];
+
+function unlock(id){
+ if(!achievements.includes(id)){
+  achievements.push(id);
+  localStorage.setItem("hospitalAchievements",JSON.stringify(achievements));
+  showMsg("🏆 업적 해금: "+(achievementData.find(x=>x[0]===id)||["","새 업적"])[1]);
+ }
+}
+function unlockEnding(id,title,text){
+ if(!endings.includes(id)){
+  endings.push(id);
+  localStorage.setItem("hospitalEndings",JSON.stringify(endings));
+ }
+ if(endings.length>=endingData.length)unlock("master");
+ gameOver(title,text);
+}
+function openCollection(){
+ document.getElementById("collection").style.display="block";
+ const e=document.getElementById("endingList");
+ const a=document.getElementById("achievementList");
+ e.innerHTML="<h3>엔딩</h3>"+endingData.map(x=>endings.includes(x[0])?
+ `<div class="card"><b>${x[1]}</b>${x[2]}</div>`:
+ `<div class="card lock"><b>❓ ???</b>잠김</div>`).join("");
+ a.innerHTML="<h3>업적</h3>"+achievementData.map(x=>achievements.includes(x[0])?
+ `<div class="card"><b>${x[1]}</b>${x[2]}</div>`:
+ `<div class="card lock"><b>🔒 ???</b>잠김</div>`).join("");
+}
+function closeCollection(){document.getElementById("collection").style.display="none"}
+
+function startGame(){
+ document.getElementById("start").classList.add("hidden");
+ running=true;
+ loadGame();
+ buildMap(stage);
+ showMsg("🔦 "+stageName(stage)+"을 조사하자.");
+ loop();
+}
+
+let mt;
+function showMsg(t){
+ const e=document.getElementById("msg");
+ e.textContent=t;e.style.opacity=1;
+ clearTimeout(mt);mt=setTimeout(()=>e.style.opacity=0,2300);
+}
+
+function collide(x,y){
+ for(const w of (stageWalls.length?stageWalls:walls)){
+  if(x+15>w.x&&x-15<w.x+w.w&&y+15>w.y&&y-15<w.y+w.h)return true;
+ }
+ return false;
+}
+
+function update(){
+ survivalSeconds+=1/60;
+ if(!flashlight && survivalSeconds>=30)unlock("darktime");
+ let dx=0,dy=0;
+ if(keys.w||keys.arrowup)dy--;
+ if(keys.s||keys.arrowdown)dy++;
+ if(keys.a||keys.arrowleft)dx--;
+ if(keys.d||keys.arrowright)dx++;
+ dx+=jx;dy+=jy;
+
+ if(dx||dy){
+  const n=Math.hypot(dx,dy)||1;
+  dx/=n;dy/=n;
+  let sp=player.speed;
+  if(sprint&&player.stamina>0){sp*=1.7;player.stamina-=.8}
+  else player.stamina+=.5;
+  player.stamina=Math.max(0,Math.min(100,player.stamina));
+  const nx=player.x+dx*sp,ny=player.y+dy*sp;
+  if(!collide(nx,player.y))player.x=nx;
+  if(!collide(player.x,ny))player.y=ny;
+ }
+
+ if(flashlight){
+  battery-=.006;
+  if(battery<=0){battery=0;flashlight=false;showMsg("🔋 손전등 배터리가 다 됐다.");}
+ }
+
+ updateGhost();
+ cam.x=Math.max(0,Math.min(WW-W,player.x-W/2));
+ cam.y=Math.max(0,Math.min(WH-H,player.y-H/2));
+ updateUI();
+}
+
+function updateGhost(){
+ ghostClock++;
+ if(!ghost.active){
+  document.getElementById("danger").style.opacity="0";
+  document.getElementById("heartbeat").style.opacity="0";
+  document.getElementById("heartbeat").classList.remove("pulse");
+ }
+ if(!ghost.active){
+  if(ghostClock>Math.max(180,500-stage*55)&&Math.random()<(.004+stage*.0018)){
+   const d=Math.hypot(player.x-ghost.x,player.y-ghost.y);
+   if(d<Math.max(850-stage*45,500) && !warning){
+    startGhostWarning();
+   }
+  }
+  return;
+ }
+ const dx=player.x-ghost.x,dy=player.y-ghost.y,d=Math.hypot(dx,dy)||1;
+ if(d<650){
+  ghost.x+=dx/d*ghost.speed;
+  ghost.y+=dy/d*ghost.speed;
+ }else{
+  if(d>800) unlock("runner");
+  ghost.active=false;
+ }
+ const danger=document.getElementById("danger"), hb=document.getElementById("heartbeat");
+ const intensity=Math.max(0,1-d/500);
+ danger.style.opacity=String(intensity*.9);
+ hb.style.opacity=String(intensity*.7);
+ if(intensity>.55)hb.classList.add("pulse"); else hb.classList.remove("pulse");
+ if(d<40)unlockEnding("death","💀 사망 엔딩","귀신에게 붙잡혔다. 병원 기록의 마지막 줄이 새로 추가되었다.");
+}
+
+function interact(){
+ for(const o of (mapObjects.length?mapObjects:objects)){
+  if(Math.hypot(player.x-o.x,player.y-o.y)>75)continue;
+  if(o.t==="desk"){showMsg("책상 위에는 오래된 환자 기록이 있다.");}
+  else if(o.t==="secret"){
+   if(!secretItems.includes(stage)){secretItems.push(stage);localStorage.setItem("hospitalSecrets",JSON.stringify(secretItems));unlock("detective");}
+   showMsg("🕵️ 숨겨진 단서를 발견했다! ("+secretItems.length+"/5)");
+   if(secretItems.length>=5){unlock("truth");}
+  }
+  else if(o.t==="wrongDoor"){
+   unlock("wrong");
+   showMsg("🚪 잘못된 문이다! 안쪽에서 문이 잠겼다.");
+   scare();
+  }
+  else if(o.t==="secretDoor"){
+   if(secretItems.length>=5){
+    secretDoor=true; unlock("secretdoor"); unlock("ghost");
+    unlockEnding("secret","🔴 비밀 엔딩","문 너머에는 병원의 모든 기록이 있었다. 그리고 마지막 기록에는 당신의 이름이 적혀 있었다.");
+   }else showMsg("🔒 이상한 문이다. 아직 단서가 부족하다.");
+  }
+  else if(o.t==="locker")showMsg("🔒 사물함이 잠겨 있다.");
+  else if(o.t==="bed"){showMsg("침대 밑에서 무언가 움직였다...");if(Math.random()<.25)scare();}
+  else if(o.t==="cabinet")showMsg("빈 서랍이다.");
+  else if(o.t==="key"){hasKey=true;unlock("firstkey");showMsg("🔑 녹슨 열쇠를 얻었다!");}
+  else if(o.t==="note"){hasCode=true;showMsg("📄 메모: 최종문 비밀번호는 4729");}
+  else if(o.t==="puzzle"){
+   if(!hasCode)showMsg("🧩 숫자 키패드다. 단서가 필요하다.");
+   else{
+    const code=prompt("비밀번호 4자리");
+    if(code==="4729")showMsg("🔓 잠금이 해제됐다.");
+    else{showMsg("❌ 틀렸다.");scare();}
+   }
+  }
+  else if(o.t==="note"){
+   unlock("notes");
+   if(stage===5)unlock("lab");
+   showMsg("🗒️ 오래된 실험 기록을 발견했다.");
+  }
+  else if(o.t==="battery"){battery=Math.min(100,battery+40);o.t="empty";showMsg("🔋 배터리를 충전했다.");}
+  else if(o.t==="banana"){
+   unlock("banana"); if(!endings.includes("banana"))endings.push("banana");
+   localStorage.setItem("hospitalEndings",JSON.stringify(endings));
+   showMsg("🍌 이상한 바나나다.");
+   if(confirm("먹어볼까?")){
+    document.body.style.transform="rotate(180deg)";
+    setTimeout(()=>document.body.style.transform="",3000);
+   }
+  }
+  else if(o.t==="exit"){
+   if(hasKey){
+    if(stage<5){
+     unlock("firstdoor");
+     if(stage===4)unlock("explorer");
+     if(battery>=50)unlock("battery");
+     showMsg("🚪 문을 열었다! 다음 구역으로 이동한다...");
+     setTimeout(()=>buildMap(stage+1),900);
+    }else{
+     if(battery<=0 && survivalSeconds>=30)unlockEnding("dark","🔋 암흑 엔딩","손전등이 꺼진 어둠 속에서 마지막 문을 열었다. 하지만 밖은 더 어두웠다.");
+     else if(secretItems.length>=5)unlockEnding("truth","👁️ 진실 엔딩","모든 기록을 모았다. 이 병원에서 가장 오래 입원한 환자는 바로 당신이었다.");
+     else unlockEnding("normal","🎉 일반 탈출","5개의 구역을 모두 통과하고 폐병원을 탈출했다.");
+    }
+   }else showMsg("🚪 잠겨 있다. 이 구역의 🔑 열쇠가 필요하다.");
+  }
+ }
+}
+
+function startGhostWarning(){
+ if(warning)return;
+ warning=true;
+ const w=document.getElementById("warning");
+ const t=document.getElementById("warningText");
+ t.textContent="⚠️ 위험 감지\n발자국 소리가 들린다...";
+ t.style.whiteSpace="pre-line";
+ w.style.opacity="1";
+ w.classList.add("warnFlash");
+ document.body.classList.add("shake");
+ showMsg("⚠️ 뭔가 가까이 다가오고 있다...");
+
+ clearTimeout(warningTimer);
+ warningTimer=setTimeout(()=>{
+   w.style.opacity="0";
+   w.classList.remove("warnFlash");
+   document.body.classList.remove("shake");
+   ghost.active=true;
+   warning=false;
+   unlock("firstghost");
+   showMsg("👻 !!! 귀신이 나타났다!");
+ },1600);
+}
+
+function scare(){
+ if(!warning)startGhostWarning();
+ ghost.x=player.x+50;
+ ghost.y=player.y-40;
+ setTimeout(()=>ghost.active=false,2600);
+}
+
+function draw(){
+ const themes=[
+  ["#20262c","#293037","#3a424a","#3f474f"],
+  ["#24201f","#322a28","#49403b","#514842"],
+  ["#20262d","#28333a","#394852","#42535d"],
+  ["#29201f","#362727","#4a3333","#543838"],
+  ["#1d2228","#252d35","#37414b","#46525e"]
+ ];
+ const th=themes[Math.min(stage-1,4)];
+ ctx.fillStyle=th[0];
+ ctx.fillRect(0,0,W,H);
+ ctx.save();
+ ctx.translate(-cam.x,-cam.y);
+
+ /* 밝은 바닥 */
+ ctx.fillStyle="#20262c";
+ ctx.fillRect(0,0,WW,WH);
+
+ ctx.strokeStyle="#303840";
+ ctx.lineWidth=1;
+ for(let x=45;x<WW-45;x+=50){ctx.beginPath();ctx.moveTo(x,45);ctx.lineTo(x,WH-45);ctx.stroke()}
+ for(let y=45;y<WH-45;y+=50){ctx.beginPath();ctx.moveTo(45,y);ctx.lineTo(WW-45,y);ctx.stroke()}
+
+ /* 방별 밝은 바닥 */
+ ctx.fillStyle=th[1];
+ ctx.fillRect(60,340,650,850);
+ ctx.fillStyle=th[2];
+ ctx.fillRect(1120,340,340,560);
+ ctx.fillStyle=th[1];
+ ctx.fillRect(1540,340,850,700);
+
+ for(const w of (stageWalls.length?stageWalls:walls)){
+  ctx.fillStyle=th[3];
+  ctx.fillRect(w.x,w.y,w.w,w.h);
+  ctx.strokeStyle="#66707a";
+  ctx.strokeRect(w.x,w.y,w.w,w.h);
+ }
+
+ ctx.textAlign="center";
+ ctx.font="bold 28px Arial";
+ ctx.fillStyle="#d9e0e7";
+ ctx.fillText("ZONE "+stage+" · "+stageName(stage),player.x,player.y-55);
+ for(const o of (mapObjects.length?mapObjects:objects)){
+  if(o.t==="empty")continue;
+  let icon="",color="#c3cad1";
+  if(o.t==="desk")icon="▣";
+  if(o.t==="locker")icon="▥";
+  if(o.t==="bed")icon="▰";
+  if(o.t==="cabinet")icon="▤";
+  if(o.t==="key"){icon="🔑";color="#ffe06a"}
+  if(o.t==="note")icon="▤";
+  if(o.t==="puzzle")icon="▦";
+  if(o.t==="battery"){icon="🔋";color="#cfe77c"}
+  if(o.t==="banana")icon="🍌";
+  if(o.t==="exit")icon="🚪";
+  ctx.font=o.t==="banana"||o.t==="key"||o.t==="battery"?"30px Arial":"28px Arial";
+  ctx.fillStyle=color;
+  if(icon)ctx.fillText(icon,o.x,o.y);
+ }
+
+ if(ghost.active){
+  ctx.fillStyle="#e2e5e8";
+  ctx.beginPath();ctx.arc(ghost.x,ghost.y,25,0,Math.PI*2);ctx.fill();
+  ctx.fillStyle="#111";
+  ctx.beginPath();ctx.arc(ghost.x-9,ghost.y-4,4,0,Math.PI*2);ctx.arc(ghost.x+9,ghost.y-4,4,0,Math.PI*2);ctx.fill();
+ }
+
+ /* player */
+ ctx.fillStyle="#a9c9f5";
+ ctx.beginPath();ctx.arc(player.x,player.y,16,0,Math.PI*2);ctx.fill();
+ ctx.fillStyle="#eef6ff";
+ ctx.beginPath();ctx.arc(player.x,player.y,5,0,Math.PI*2);ctx.fill();
+
+ ctx.restore();
+
+ /* 밝은 전체 조명 */
+ ctx.fillStyle="rgba(0,0,0,.25)";
+ ctx.fillRect(0,0,W,H);
+
+ if(flashlight){
+  const px=player.x-cam.x,py=player.y-cam.y;
+  const g=ctx.createRadialGradient(px,py,20,px,py,430);
+  g.addColorStop(0,"rgba(255,255,230,.45)");
+  g.addColorStop(.55,"rgba(255,255,220,.18)");
+  g.addColorStop(1,"rgba(255,255,220,0)");
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(px,py,430,0,Math.PI*2);ctx.fill();
+ }
+
+ const edge=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*.25,W/2,H/2,Math.max(W,H)*.8);
+ edge.addColorStop(0,"rgba(0,0,0,0)");
+ edge.addColorStop(1,"rgba(0,0,0,.28)");
+ ctx.fillStyle=edge;ctx.fillRect(0,0,W,H);
+}
+
+function updateUI(){
+ document.getElementById("room").textContent=stageName(stage)+" · "+stage+"/5";
+ document.getElementById("bat").textContent=Math.floor(battery);
+ document.getElementById("batbar").style.width=battery+"%";
+ document.getElementById("sta").textContent=Math.floor(player.stamina);
+ document.getElementById("stambar").style.width=player.stamina+"%";
+ document.getElementById("key").textContent=hasKey?"보유":"없음";
+ document.getElementById("flashState").textContent=flashlight?"ON":"OFF";
+}
+
+function gameOver(title,text){
+ running=false;
+ if(title.includes("잡혔다")){unlock("death");if(!endings.includes("death"))endings.push("death");localStorage.setItem("hospitalEndings",JSON.stringify(endings));}
+ 
+ document.getElementById("endTitle").textContent=title;
+ document.getElementById("endText").textContent=text;
+ document.getElementById("end").classList.remove("hidden");
+}
+
+function loop(){
+ if(!running)return;
+ update();draw();requestAnimationFrame(loop);
+}
+
+function saveGame(){
+ localStorage.setItem("hospitalSave",JSON.stringify({player,battery,flashlight,hasKey,hasCode,stage}));
+}
+function loadGame(){
+ try{
+  const s=JSON.parse(localStorage.getItem("hospitalSave"));
+  if(!s)return;
+  player=s.player||player;
+  battery=s.battery??100;
+  flashlight=s.flashlight??true;
+  hasKey=!!s.hasKey;
+  hasCode=!!s.hasCode;
+  stage=s.stage||1;
+ }catch(e){}
+}
+setInterval(()=>{if(running)saveGame()},10000);
+
+addEventListener("keydown",e=>{
+ const k=e.key.toLowerCase();
+ keys[k]=true;
+ if(k==="e")interact();
+ if(k==="f")toggleFlash();
+ if(k==="shift")sprint=true;
 });
-
-function level(){
-if(difficulty==="easy")return 0;
-if(difficulty==="normal")return 1;
-if(difficulty==="hard")return 2;
-return 3;
-}
-
-function difficultyName(){
-return{
-easy:"쉬움",
-normal:"보통",
-hard:"어려움",
-night:"악몽"
-}[difficulty];
-}
-
-function start(){
-
-started=true;
-
-document.getElementById("start").style.display="none";
-document.getElementById("difficulty").textContent=difficultyName();
-
-startTime=Date.now();
-
-clearInterval(timer);
-
-timer=setInterval(()=>{
-document.getElementById("time").textContent=
-formatTime((Date.now()-startTime)/1000);
-},500);
-
-if(difficulty==="night"){
-document.getElementById("limit").style.display="block";
-startNightLimit();
-}
-
-loadRoom(1);
-}
-
-function startNightLimit(){
-
-clearTimeout(limitTimer);
-
-limitTimer=setTimeout(()=>{
-if(started){
-say("💀 시간이 끝났다...");
-gameOver();
-}
-},15*60*1000);
-}
-
-function gameOver(){
-
-started=false;
-clearInterval(timer);
-
-M.style.display="flex";
-
-C.innerHTML=`
-<h2>💀 탈출 실패</h2>
-<p>
-시간이 다 되어 버렸습니다.<br>
-악몽 난이도에서는 실수할 시간이 없습니다.
-</p>
-<button class="ok" onclick="location.reload()">다시 도전</button>
-`;
-}
-
-function formatTime(sec){
-
-sec=Math.floor(sec);
-
-let m=Math.floor(sec/60);
-let s=String(sec%60).padStart(2,"0");
-
-return m+":"+s;
-}
-
-function say(text){
-
-MSG.textContent=text;
-MSG.style.opacity="1";
-
-clearTimeout(say.timer);
-
-say.timer=setTimeout(()=>{
-MSG.style.opacity="0";
-},2600);
-}
-
-function has(id){
-return inv.includes(id);
-}
-
-function getItem(id){
-
-if(has(id)){
-say("이미 가지고 있다.");
-return;
-}
-
-inv.push(id);
-
-document.getElementById("count").textContent=inv.length;
-
-renderInventory();
-
-say("획득: "+ICON[id]);
-}
-
-function renderInventory(){
-
-document.getElementById("inventory").innerHTML=
-inv.map(id=>`
-<div class="slot">${ICON[id]}</div>
-`).join("");
-}
-
-function clearWorld(){
-W.innerHTML="";
-}
-
-function base(){
-
-let f=document.createElement("div");
-
-f.className="floor";
-
-W.appendChild(f);
-
-wall(0,7,7,85);
-wall(93,7,7,85);
-wall(0,7,100,7);
-wall(0,85,100,7);
-}
-
-function wall(x,y,w,h){
-
-let e=document.createElement("div");
-
-e.className="wall";
-
-e.style.left=x+"%";
-e.style.top=y+"%";
-e.style.width=w+"%";
-e.style.height=h+"%";
-
-W.appendChild(e);
-}
-
-function object(cls,x,y,w,h,html,fn){
-
-let e=document.createElement("div");
-
-e.className="obj "+cls;
-
-e.style.left=x+"%";
-e.style.top=y+"%";
-e.style.width=w+"%";
-e.style.height=h+"%";
-
-e.innerHTML=html;
-
-e.onclick=fn;
-
-W.appendChild(e);
-
-return e;
-}
-
-function door(x,y,fn,fake=false){
-
-let e=object(
-"door"+(fake?" fake":""),
-x,y,11,20,
-`
-<span>${fake?"FAKE":"EXIT"}</span>
-<strong>${fake?"⚠️":"🔒"}</strong>
-<span>${fake?"가짜 출구":"탈출구"}</span>
-`,
-fn
-);
-
-return e;
-}
-
-function panel(x,y,fn,label="암호 장치"){
-
-return object(
-"panel",
-x,y,14,13,
-`
-<b>---</b>
-<small>${label}</small>
-`,
-fn
-);
-}
-
-function note(x,y,text,fn){
-
-return object(
-"note",
-x,y,16,14,
-text,
-fn
-);
-}
-
-function itemObject(x,y,icon,name,fn){
-
-return object(
-"item",
-x,y,8,12,
-`${icon}<small>${name}</small>`,
-fn
-);
-}
-
-/* 암호 */
-
-function randomCode(){
-
-return String(
-Math.floor(1000+Math.random()*9000)
-);
-}
-
-function openCode(correct){
-
-currentCode=String(correct);
-
-M.style.display="flex";
-
-C.innerHTML=`
-<h2>🔢 암호 장치</h2>
-
-<p>
-주변 단서를 확인하고 암호를 입력하세요.
-${difficulty==="night"?
-"<br><b style='color:#ff7777'>⚠️ 악몽: 암호는 매 게임마다 바뀝니다.</b>":
-""}
-</p>
-
-<input
-id="codeInput"
-class="input"
-type="text"
-inputmode="numeric"
-maxlength="8"
-autocomplete="off"
-placeholder="암호 입력"
->
-
-<div class="actions">
-
-<button class="ok"
-onclick="submitCode()">
-확인
-</button>
-
-<button class="cancel"
-onclick="closeModal()">
-취소
-</button>
-
-</div>
-`;
-
-setTimeout(()=>{
-
-const input=document.getElementById("codeInput");
-
-if(input){
-
-input.focus();
-
-input.onkeydown=e=>{
-if(e.key==="Enter")submitCode();
-};
-
-}
-
-},50);
-}
-
-function submitCode(){
-
-const input=document.getElementById("codeInput");
-
-if(!input)return;
-
-if(input.value.trim()===String(currentCode)){
-
-flags.code=true;
-
-closeModal();
-
-say("🔓 암호가 맞았다! 잠금이 해제됐다.");
-
-}else{
-
-input.value="";
-
-input.focus();
-
-if(level()>=2){
-
-APP.classList.add("shake");
-
-setTimeout(()=>{
-APP.classList.remove("shake");
-},350);
-}
-
-say("❌ 암호가 틀렸다.");
-}
-}
-
-function closeModal(){
-M.style.display="none";
-}
-
-/* 방 */
-
-function loadRoom(n){
-
-room=n;
-flags={};
-usedWarning=false;
-fakeUsed=false;
-
-clearWorld();
-
-document.getElementById("room").textContent=
-`ROOM ${n} / 10`;
-
-document.getElementById("roomName").textContent=
-names[n-1];
-
-if(n===1)room1();
-if(n===2)room2();
-if(n===3)room3();
-if(n===4)room4();
-if(n===5)room5();
-if(n===6)room6();
-if(n===7)room7();
-if(n===8)room8();
-if(n===9)room9();
-if(n===10)room10();
-}
-
-/* ROOM 1 */
-
-function room1(){
-
-base();
-
-let code;
-
-if(difficulty==="easy")code="413";
-else if(difficulty==="normal")code="731";
-else if(difficulty==="hard")code="5831";
-else{
-code=randomCode();
-flags.secretCode=code;
-}
-
-door(44,12,()=>{
-
-if(flags.code)nextRoom();
-else say("🔒 암호가 필요하다.");
+addEventListener("keyup",e=>{
+ const k=e.key.toLowerCase();
+ keys[k]=false;
+ if(k==="shift")sprint=false;
 });
-
-if(difficulty==="easy"){
-
-note(
-17,28,
-`
-<b>연구원 메모</b><br>
-314를 거꾸로 읽어라.
-`,
-()=>{
-say("314 → 413");
-}
-);
-
+function toggleFlash(){
+ if(battery<=0){showMsg("🔋 배터리가 없다.");return}
+ flashlight=!flashlight;
+ showMsg(flashlight?"🔦 손전등 ON":"🔦 손전등 OFF");
 }
 
-else if(difficulty==="normal"){
-
-note(
-17,28,
-`
-<b>찢어진 기록</b><br>
-첫 숫자는 7.<br>
-마지막 숫자는 1.<br>
-가운데는 3.
-`,
-()=>{
-say("순서를 조합하면 731.");
+/* mobile */
+function mobileCheck(){
+ document.getElementById("mobile").style.display=innerWidth<800?"block":"none";
+ document.getElementById("hint").style.display=innerWidth<800?"none":"block";
 }
-);
+mobileCheck();addEventListener("resize",mobileCheck);
 
+const joy=document.getElementById("joy"),knob=document.getElementById("knob");
+let jid=null;
+joy.addEventListener("pointerdown",e=>{jid=e.pointerId;joy.setPointerCapture(jid);moveJoy(e);e.preventDefault()},{passive:false});
+joy.addEventListener("pointermove",e=>{if(e.pointerId===jid)moveJoy(e);e.preventDefault()},{passive:false});
+joy.addEventListener("pointerup",resetJoy);
+joy.addEventListener("pointercancel",resetJoy);
+function moveJoy(e){
+ const r=joy.getBoundingClientRect();
+ let x=e.clientX-(r.left+r.width/2),y=e.clientY-(r.top+r.height/2);
+ const m=43,n=Math.hypot(x,y)||1;
+ if(n>m){x=x/n*m;y=y/n*m}
+ jx=x/m;jy=y/m;knob.style.transform=`translate(${x}px,${y}px)`;
 }
-
-else{
-
-note(
-16,27,
-`
-<b>암호 기록</b><br>
-1번째 = 5<br>
-2번째 = 8<br>
-3번째 = 3<br>
-4번째 = 1
-`,
-()=>{
-say("순서를 잘 확인해야 한다.");
-}
-);
-
-}
-
-panel(
-67,50,
-()=>openCode(code)
-);
-}
-
-/* ROOM 2 */
-
-function room2(){
-
-base();
-
-wall(33,15,4,70);
-wall(62,27,4,58);
-
-door(79,62,()=>{
-
-if(has("key")&&has("key2")){
-
-nextRoom();
-
-}else{
-
-say("🔒 열쇠 2개가 필요하다.");
-}
-});
-
-itemObject(
-16,24,
-"🗝️",
-"열쇠 A",
-()=>getItem("key")
-);
-
-itemObject(
-72,24,
-"🗝️",
-"열쇠 B",
-()=>getItem("key2")
-);
-
-note(
-42,40,
-`
-<b>창고 기록</b><br>
-왼쪽 상자와<br>
-오른쪽 상자를 찾아라.
-`,
-()=>{
-say("열쇠는 서로 다른 곳에 있다.");
-}
-);
-
-if(level()>=2){
-
-itemObject(
-46,67,
-"🗝️",
-"가짜 열쇠",
-()=>{
-say("❌ 가짜 열쇠다!");
-APP.classList.add("shake");
-setTimeout(()=>APP.classList.remove("shake"),300);
-}
-);
-
-}
-
-}
-
-/* ROOM 3 */
-
-function room3(){
-
-base();
-
-wall(27,15,4,68);
-wall(51,28,4,57);
-wall(75,15,4,68);
-
-let code=
-difficulty==="easy"?"284":
-difficulty==="normal"?"824":
-difficulty==="hard"?"428":
-randomCode();
-
-door(8,65,()=>{
-
-if(flags.code)nextRoom();
-else say("🔒 색상 암호가 필요하다.");
-});
-
-note(
-14,23,
-`
-<b>색상 기록</b><br>
-🔴 = 2<br>
-🔵 = 8<br>
-🟢 = 4
-`,
-()=>{
-say("색상의 순서를 잘 살펴보자.");
-}
-);
-
-if(level()>=2){
-
-note(
-15,55,
-`
-<b>추가 기록</b><br>
-경고: 일부 기록은<br>
-순서가 뒤집혀 있다.
-`,
-()=>{
-say("문서가 거꾸로 되어 있을 수도 있다.");
-}
-);
-
-}
-
-panel(
-62,48,
-()=>openCode(code),
-"보안 패널"
-);
-
-}
-
-/* ROOM 4 */
-
-function room4(){
-
-base();
-
-wall(20,25,55,4);
-wall(20,55,4,30);
-wall(70,25,4,60);
-
-let code=
-difficulty==="easy"?"32":
-difficulty==="normal"?"32":
-difficulty==="hard"?"96":
-randomCode();
-
-door(43,12,()=>{
-
-if(flags.code)nextRoom();
-else say("🔒 계산 암호가 필요하다.");
-});
-
-note(
-55,63,
-`
-<b>실험 공식</b><br>
-2 × 6 = 12<br>
-3 × 7 = 21<br>
-4 × 8 = ?
-`,
-()=>{
-say(level()>=2?"규칙을 직접 계산하라.":"정답은 32.");
-}
-);
-
-if(level()>=2){
-
-note(
-25,65,
-`
-<b>주의</b><br>
-계산 결과를<br>
-다른 장치와 비교하라.
-`,
-()=>{
-say("단순히 숫자 하나만 보는 게 아니다.");
-}
-);
-
-}
-
-panel(
-24,39,
-()=>openCode(code),
-"실험실"
-);
-
-}
-
-/* ROOM 5 */
-
-function room5(){
-
-base();
-
-wall(30,15,4,70);
-wall(60,15,4,70);
-
-door(80,22,()=>{
-
-if(has("flash"))nextRoom();
-else say("🔒 손전등이 필요하다.");
-});
-
-itemObject(
-17,64,
-"🔦",
-"손전등",
-()=>getItem("flash")
-);
-
-note(
-42,67,
-`
-<b>낙서</b><br>
-빛이 없으면<br>
-보이지 않는 문이 있다.
-`,
-()=>{
-say("손전등을 찾자.");
-}
-);
-
-if(level()>=1){
-
-itemObject(
-68,55,
-"🔋",
-"배터리",
-()=>{
-getItem("battery");
-say("손전등이 더 강해졌다.");
-}
-);
-
-}
-
-if(level()>=2){
-
-setTimeout(ghostWarning,1500);
-
-}
-
-}
-
-/* ROOM 6 */
-
-function room6(){
-
-base();
-
-wall(45,15,4,70);
-
-door(9,28,()=>{
-
-if(flags.power)nextRoom();
-else say("🔒 전력을 복구해야 한다.");
-});
-
-itemObject(
-69,25,
-"⚡",
-"퓨즈",
-()=>getItem("fuse")
-);
-
-itemObject(
-69,62,
-"🔌",
-"케이블",
-()=>getItem("cable")
-);
-
-panel(
-24,42,
-()=>{
-
-if(has("fuse")&&has("cable")){
-
-flags.power=true;
-
-say("⚡ 전력 복구 성공!");
-
-}else{
-
-say("퓨즈와 케이블이 필요하다.");
-}
-
-},
-"발전기"
-);
-
-if(level()>=3){
-
-itemObject(
-18,65,
-"⚡",
-"손상된 퓨즈",
-()=>{
-say("❌ 이건 고장났다.");
-}
-);
-
-}
-
-}
-
-/* ROOM 7 */
-
-function room7(){
-
-base();
-
-wall(24,18,4,67);
-wall(50,18,4,67);
-wall(76,18,4,67);
-
-let code;
-
-if(difficulty==="easy")code="137";
-else if(difficulty==="normal")code="137";
-else if(difficulty==="hard")code="713";
-else code=randomCode();
-
-door(45,70,()=>{
-
-if(flags.code)nextRoom();
-else say("🔒 거울 암호가 필요하다.");
-});
-
-note(
-13,30,
-`
-<b>거울의 문</b><br>
-731<br><br>
-모든 것이 반대다.
-`,
-()=>{
-say("731을 뒤집으면 137.");
-}
-);
-
-if(level()>=2){
-
-note(
-55,58,
-`
-<b>깨진 거울</b><br>
-일부 숫자는<br>
-반대로 보인다.
-`,
-()=>{
-say("보이는 숫자를 그대로 믿지 마라.");
-}
-);
-
-}
-
-panel(
-63,30,
-()=>openCode(code),
-"Mirror Lock"
-);
-
-}
-
-/* ROOM 8 */
-
-function room8(){
-
-base();
-
-wall(35,15,4,70);
-wall(65,15,4,70);
-
-door(8,43,()=>{
-
-if(flags.sec)nextRoom();
-else say("🔒 보안 해제가 필요하다.");
-});
-
-itemObject(
-77,24,
-"💳",
-"보안 카드",
-()=>getItem("card")
-);
-
-panel(
-47,37,
-()=>{
-
-if(has("card")){
-
-flags.sec=true;
-
-say("🟢 보안 시스템 해제!");
-
-}else{
-
-say("보안 카드가 없다.");
-}
-
-},
-"SECURITY"
-);
-
-note(
-18,65,
-`
-<b>보안 기록</b><br>
-카드 소지자만<br>
-패널을 사용할 수 있다.
-`,
-()=>{
-say("카드를 먼저 찾아야 한다.");
-}
-);
-
-if(level()>=2){
-
-itemObject(
-45,66,
-"💳",
-"위조 카드",
-()=>{
-say("❌ 위조 카드다!");
-}
-);
-
-}
-
-}
-
-/* ROOM 9 */
-
-function room9(){
-
-base();
-
-wall(20,18,4,65);
-wall(43,30,4,55);
-wall(67,18,4,65);
-
-door(
-8,15,
-()=>{
-fakeDoor();
-},
-true
-);
-
-door(
-78,15,
-()=>{
-
-if(has("star"))nextRoom();
-else say("🔒 ⭐ 별표가 필요하다.");
-}
-);
-
-note(
-41,21,
-`
-<b>뒤틀린 기록</b><br>
-왼쪽 문은 거짓말.<br>
-오른쪽 문을 찾아라.
-`,
-()=>{
-say("오른쪽 문이 진짜다.");
-}
-);
-
-itemObject(
-53,66,
-"⭐",
-"별표",
-()=>getItem("star")
-);
-
-if(level()>=2){
-
-door(
-45,15,
-()=>{
-say("❌ 또 다른 가짜 출구다!");
-APP.classList.add("shake");
-setTimeout(()=>APP.classList.remove("shake"),500);
-},
-true
-);
-
-}
-
-if(level()>=3){
-
-setTimeout(ghostWarning,1300);
-
-}
-
-}
-
-function fakeDoor(){
-
-fakeUsed=true;
-
-say(
-difficulty==="night"?
-"💀 함정이다! 뒤에서 소리가 들린다!":
-"❌ 가짜 출구다!"
-);
-
-APP.classList.add("shake");
-
-setTimeout(()=>{
-APP.classList.remove("shake");
-},700);
-
-if(difficulty==="night"){
-
-setTimeout(()=>{
-say("👻 도망쳐!");
-},700);
-
-}
-
-}
-
-/* ROOM 10 */
-
-function room10(){
-
-base();
-
-wall(28,18,4,60);
-wall(68,18,4,60);
-
-door(
-44,13,
-()=>{
-
-if(has("final")){
-
-finish();
-
-}else{
-
-say("🔒 마지막 열쇠가 필요하다.");
-}
-
-}
-);
-
-note(
-61,35,
-`
-<b>최종 기록</b><br>
-마지막 열쇠는<br>
-문 근처에 있다.
-`,
-()=>{
-say("마지막 열쇠를 찾아라.");
-}
-);
-
-itemObject(
-46,67,
-"🗝️",
-"최종 열쇠",
-()=>getItem("final")
-);
-
-if(level()>=2){
-
-note(
-14,58,
-`
-<b>경고</b><br>
-마지막 방이라고<br>
-방심하지 마라.
-`,
-()=>{
-say("끝까지 조심하자.");
-}
-);
-
-}
-
-if(level()>=2){
-
-setTimeout(ghostWarning,1800);
-
-}
-
-}
-
-/* 귀신 */
-
-function ghostWarning(){
-
-if(usedWarning)return;
-
-usedWarning=true;
-
-const w=document.getElementById("warning");
-
-w.style.display="flex";
-
-APP.classList.add("shake");
-
-say("⚠️ 뭔가 가까이 다가오고 있다!");
-
-setTimeout(()=>{
-
-w.style.display="none";
-
-APP.classList.remove("shake");
-
-say("👻 !!! 무언가가 바로 뒤에 있었다!");
-
-},1700);
-
-}
-
-/* 다음 방 */
-
-function nextRoom(){
-
-if(room>=10){
-
-finish();
-
-return;
-}
-
-M.style.display="flex";
-
-C.innerHTML=`
-<h2>🚪 ROOM ${room} 탈출 성공!</h2>
-<p>
-이번 방은 끝났습니다.<br>
-하지만 다음 방은 더 어려워집니다.
-</p>
-<button class="ok"
-onclick="M.style.display='none';loadRoom(${room+1})">
-ROOM ${room+1} →
-</button>
-`;
-
-}
-
-function loadRoom(n){
-
-room=n;
-
-flags={};
-
-usedWarning=false;
-
-fakeUsed=false;
-
-clearWorld();
-
-document.getElementById("room").textContent=
-`ROOM ${n} / 10`;
-
-document.getElementById("roomName").textContent=
-names[n-1];
-
-if(n===1)room1();
-if(n===2)room2();
-if(n===3)room3();
-if(n===4)room4();
-if(n===5)room5();
-if(n===6)room6();
-if(n===7)room7();
-if(n===8)room8();
-if(n===9)room9();
-if(n===10)room10();
-}
-
-/* 엔딩 */
-
-function finish(){
-
-started=false;
-
-clearInterval(timer);
-clearTimeout(limitTimer);
-
-const total=(Date.now()-startTime)/1000;
-
-const key="escapeBest_"+difficulty;
-
-const oldBest=
-Number(localStorage.getItem(key)||0);
-
-let record=false;
-
-if(!oldBest||total<oldBest){
-
-localStorage.setItem(
-key,
-Math.floor(total)
-);
-
-record=true;
-}
-
-M.style.display="flex";
-
-C.innerHTML=`
-<h2>🏆 완전 탈출 성공!</h2>
-
-<p>
-10개의 방을 모두 탈출했습니다!<br>
-난이도: <b>${difficultyName()}</b>
-</p>
-
-<div style="
-font-size:44px;
-color:#68f3c0;
-text-align:center;
-font-weight:900;
-margin:20px 0
-">
-${formatTime(total)}
-</div>
-
-<p style="text-align:center">
-${record?
-"✨ "+difficultyName()+" 신기록!":
-"🏆 최고 기록 "+formatTime(oldBest)}
-</p>
-
-<button class="ok"
-onclick="location.reload()">
-다시 도전
-</button>
-`;
-
-}
-
-document.addEventListener("keydown",e=>{
-
-if(e.key==="Escape"){
-
-M.style.display="none";
-
-}
-
-});
-
+function resetJoy(){jx=0;jy=0;knob.style.transform="translate(0,0)"}
+
+document.getElementById("flash").addEventListener("pointerdown",e=>{e.preventDefault();toggleFlash()},{passive:false});
+document.getElementById("use").addEventListener("pointerdown",e=>{e.preventDefault();interact()},{passive:false});
+document.getElementById("run").addEventListener("pointerdown",e=>{e.preventDefault();sprint=true},{passive:false});
+document.getElementById("run").addEventListener("pointerup",()=>sprint=false);
+document.getElementById("run").addEventListener("pointercancel",()=>sprint=false);
 </script>
 </body>
 </html>
